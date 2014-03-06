@@ -38,4 +38,9 @@ vec4 getLight(){
 void main(){
 
     outputColor = getLight() * texture2D(texture0, oUV);
+//if(lightCount == 3)
+/*if(lightColor[2].z==3f)
+outputColor=vec4(1,0,0,1);
+else
+outputColor=vec4(0,1,0,1);*/
 }

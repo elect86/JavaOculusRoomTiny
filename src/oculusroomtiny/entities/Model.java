@@ -338,9 +338,9 @@ public class Model extends Node {
                 buffer[i * (3 + 4 + 2 + 3) + 1] = vertices.get(i).getPos().y;
                 buffer[i * (3 + 4 + 2 + 3) + 2] = vertices.get(i).getPos().z;
                 // Color
-                buffer[i * (3 + 4 + 2 + 3) + 3] = (float) vertices.get(i).getC().x / 255f;
-                buffer[i * (3 + 4 + 2 + 3) + 4] = (float) vertices.get(i).getC().y / 255f;
-                buffer[i * (3 + 4 + 2 + 3) + 5] = (float) vertices.get(i).getC().z / 255f;
+                buffer[i * (3 + 4 + 2 + 3) + 3] = (float) vertices.get(i).getC().x ;
+                buffer[i * (3 + 4 + 2 + 3) + 4] = (float) vertices.get(i).getC().y ;
+                buffer[i * (3 + 4 + 2 + 3) + 5] = (float) vertices.get(i).getC().z ;
 //                buffer[i * (3 + 4 + 2 + 3) + 3] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 4] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 5] = 1;
