@@ -5,7 +5,6 @@
  */
 package oculusroomtiny.entities;
 
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.FloatBuffer;
 import javax.media.opengl.GL3;
@@ -56,7 +55,7 @@ public class Scene {
 
         int n = lighting.getLightCount();
 
-        lightPos[n] = new Vec4(pos, 0);
+        lightPos[n] = new Vec4(pos, 1);
 
         lighting.getLightColor()[n] = color;
 
@@ -84,14 +83,14 @@ public class Scene {
             fs[3 + 1 + i * 4 + 2] = lighting.getLightPos()[i].z;
             fs[3 + 1 + i * 4 + 3] = lighting.getLightPos()[i].w;
 
-            fs[3 + 1 + 4 * 8 + i * 4] = lighting.getLightColor()[i].x;
-            fs[3 + 1 + 4 * 8 + i * 4 + 1] = lighting.getLightColor()[i].y;
-            fs[3 + 1 + 4 * 8 + i * 4 + 2] = lighting.getLightColor()[i].z;
-            fs[3 + 1 + 4 * 8 + i * 4 + 3] = lighting.getLightColor()[i].w;
+            fs[3 + 1 + 4 * 8 + i * 4] = lighting.getLightColor()[i].x/255;
+            fs[3 + 1 + 4 * 8 + i * 4 + 1] = lighting.getLightColor()[i].y/255;
+            fs[3 + 1 + 4 * 8 + i * 4 + 2] = lighting.getLightColor()[i].z/255;
+            fs[3 + 1 + 4 * 8 + i * 4 + 3] = lighting.getLightColor()[i].w/255;
         }
 
         FloatBuffer floatBuffer = GLBuffers.newDirectFloatBuffer(fs);
-
+//        System.out.println("fs.length "+fs.length);
         gl3.glBindBuffer(GL3.GL_UNIFORM_BUFFER, OculusRoomTiny.getInstance().getGlViewer().getLightingUBO()[0]);
         {
             gl3.glBufferSubData(GL3.GL_UNIFORM_BUFFER, offset, fs.length * 4, floatBuffer);

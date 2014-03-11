@@ -172,9 +172,9 @@ public class GlViewer implements GLEventListener {
         Vec3 shiftedEyePos = eyePos.plus(eyeCenterInHeadFrame);
         shiftedEyePos.y -= eyeCenterInHeadFrame.y;  // Bring the head back down to original height
 
-        shiftedEyePos.print("shiftedEyePos");
-        (shiftedEyePos.plus(forward)).print("shiftedEyePos.plus(forward)");
-        up.print("up");
+//        shiftedEyePos.print("shiftedEyePos");
+//        (shiftedEyePos.plus(forward)).print("shiftedEyePos.plus(forward)");
+//        up.print("up");
         Mat4 view = lookAtRH(shiftedEyePos, shiftedEyePos.plus(forward), up);
 
         float yFov;
@@ -191,7 +191,7 @@ public class GlViewer implements GLEventListener {
         Mat4 projection = perspectiveRH(yFov, aspectRatio, 0.01f, 2000f);
 
 //        projection.print("projection");
-        view.print("view");
+//        view.print("view");
         switch (stereoMode) {
 
             case none:
