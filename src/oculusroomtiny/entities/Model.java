@@ -31,7 +31,7 @@ public class Model extends Node {
     private int[] ibo;
     private Program program;
     private Program1 program1;
-    private OculusRoomModel.BuiltinTexture builtinTexture;
+    public OculusRoomModel.BuiltinTexture builtinTexture;
     private Texture texture;
     private int[] tex;
     private boolean test = true;
@@ -57,24 +57,7 @@ public class Model extends Node {
         count
     }
 
-    public static Model createModel(Vec3 position, SlabModel slabModels) {
-
-        Model model = new Model(PrimitiveType.triangles);
-
-        model.setPosition(position);
-
-        for (int i = 0; i < slabModels.getCount(); i++) {
-
-            Slab slab = slabModels.getSlabs()[i];
-
-            model.addSolidColorBox(slab.getP1(), slab.getP2(), slab.getColor());
-        }
-        model.builtinTexture = slabModels.getTex();
-
-        return model;
-    }
-
-    private void addSolidColorBox(Vec3 p1, Vec3 p2, Vec3i c) {
+    public void addSolidColorBox(Vec3 p1, Vec3 p2, Vec3i c) {
 
         float t;
 
@@ -170,6 +153,23 @@ public class Model extends Node {
         }
 //        renderLit(gl3, projection, view);
         renderLight(gl3, projection, view);
+    }
+
+    public static Model createModel(Vec3 position, SlabModel slabModels) {
+
+        Model model = new Model(PrimitiveType.triangles);
+
+        model.setPosition(position);
+
+        for (int i = 0; i < slabModels.getCount(); i++) {
+
+            Slab slab = slabModels.getSlabs()[i];
+
+            model.addSolidColorBox(slab.getP1(), slab.getP2(), slab.getColor());
+        }
+        model.builtinTexture = slabModels.getTex();
+
+        return model;
     }
 
     private void renderLit(GL3 gl3, Mat4 projection, Mat4 view) {
@@ -293,7 +293,7 @@ public class Model extends Node {
         }
         program1.unbind(gl3);
     }
-    
+
     private void initTexture(GL3 gl3) {
 
 //        gl3.glPixelStorei(GL3.GL_UNPACK_ALIGNMENT, 1);
@@ -338,9 +338,9 @@ public class Model extends Node {
                 buffer[i * (3 + 4 + 2 + 3) + 1] = vertices.get(i).getPos().y;
                 buffer[i * (3 + 4 + 2 + 3) + 2] = vertices.get(i).getPos().z;
                 // Color
-                buffer[i * (3 + 4 + 2 + 3) + 3] = (float) vertices.get(i).getC().x ;
-                buffer[i * (3 + 4 + 2 + 3) + 4] = (float) vertices.get(i).getC().y ;
-                buffer[i * (3 + 4 + 2 + 3) + 5] = (float) vertices.get(i).getC().z ;
+                buffer[i * (3 + 4 + 2 + 3) + 3] = (float) vertices.get(i).getC().x;
+                buffer[i * (3 + 4 + 2 + 3) + 4] = (float) vertices.get(i).getC().y;
+                buffer[i * (3 + 4 + 2 + 3) + 5] = (float) vertices.get(i).getC().z;
 //                buffer[i * (3 + 4 + 2 + 3) + 3] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 4] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 5] = 1;
