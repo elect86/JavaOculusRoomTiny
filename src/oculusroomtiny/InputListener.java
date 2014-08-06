@@ -29,23 +29,10 @@ public class InputListener implements KeyListener {
 
             glViewer.toggleFullscreen();
         }
-        if (ke.getKeyCode() == KeyEvent.VK_F1) {
-
-            glViewer.setStereoMode(GlViewer.StereoMode.none);
-        }
-        if (ke.getKeyCode() == KeyEvent.VK_F2) {
-
-            glViewer.setStereoMode(GlViewer.StereoMode.leftRight_multipass);
-        }
-//        if (ke.getKeyCode() == KeyEvent.VK_F2) {
-//
-//            glViewer.toggleFullscreen();
-//        }
     }
 
     @Override
     public void keyReleased(KeyEvent ke) {
 
     }
-
 }

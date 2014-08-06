@@ -8,9 +8,6 @@ package oculusroomtiny.rendering;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.util.Animator;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
@@ -23,10 +20,6 @@ import jglm.Quat;
 import jglm.Vec3;
 import oculusroomtiny.InputListener;
 import oculusroomtiny.core.OculusRoomTiny;
-import oculusroomtiny.entities.Scene;
-import org.saintandreas.math.Quaternion;
-import org.saintandreas.oculus.RiftTracker;
-import org.saintandreas.oculus.fusion.SensorFusion;
 
 /**
  *
@@ -39,7 +32,6 @@ public class GlViewer implements GLEventListener {
     private boolean fullscreen;
     private InputListener inputListener;
     private Animator animator;
-    private SensorFusion sensorFusion;
     private Vec3 upVector;
     private Vec3 forwardVector;
     private Vec3 rightVector;
@@ -47,8 +39,6 @@ public class GlViewer implements GLEventListener {
     private float sensitivity;
     private float moveSpeed;
     private Vec3 eyePos;
-    private StereoMode stereoMode;
-    private PostProcess postProcess;
     private int lightingUBB;
     private int[] lightingUBO;
 
@@ -88,14 +78,6 @@ public class GlViewer implements GLEventListener {
 
 //        glWindow.setVisible(true);
 //        glWindow.setAutoSwapBufferMode(false);
-        sensorFusion = new SensorFusion();
-        sensorFusion.SetPredictionEnabled(true);
-        sensorFusion.setMotionTrackingEnabled(true);
-        try {
-            RiftTracker.startListening(sensorFusion.createHandler());
-        } catch (IOException ex) {
-            Logger.getLogger(GlViewer.class.getName()).log(Level.SEVERE, null, ex);
-        }
 //            RiftTracker.startListening(new Predicate<TrackerMessage>() {
 //                @Override
 //                public boolean apply(TrackerMessage message) {
@@ -108,7 +90,6 @@ public class GlViewer implements GLEventListener {
 //        } catch (IOException ex) {
 //            Logger.getLogger(GlViewer.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-
         upVector = new Vec3(0f, 1f, 0f);
         forwardVector = new Vec3(0f, 0f, -1f);
         rightVector = new Vec3(1f, 0f, 0f);
@@ -118,9 +99,6 @@ public class GlViewer implements GLEventListener {
         moveSpeed = 3f;
 
         eyePos = new Vec3(0f, 1.6f, -5f);
-
-        stereoMode = StereoMode.none;
-        postProcess = PostProcess.none;
 
         lightingUBB = 0;
     }
@@ -135,6 +113,8 @@ public class GlViewer implements GLEventListener {
         gl3.glClear(GL3.GL_COLOR_BUFFER_BIT);
 
         initUBO(gl3);
+        
+        OculusRoomModel.populateRoomScene(gl3, OculusRoomTiny.getInstance().getScene());
     }
 
     @Override
@@ -150,6 +130,7 @@ public class GlViewer implements GLEventListener {
 
 //        System.out.println("display");
         GL3 gl3 = glad.getGL().getGL3();
+
         /**
          * Rotate and position View Camera, using YawPitchRoll in BodyFrame
          * coordinates.
@@ -177,40 +158,20 @@ public class GlViewer implements GLEventListener {
 //        up.print("up");
         Mat4 view = lookAtRH(shiftedEyePos, shiftedEyePos.plus(forward), up);
 
-        float yFov;
-        float aspectRatio = (float) glWindow.getWidth() / (float) glWindow.getHeight();
-
-        if (stereoMode == StereoMode.none) {
-
-            yFov = 80f;
-
-        } else {
-
-            yFov = (float) (2f * Math.atan(0.093600 / (2 * 0.041000)));
-        }
-        Mat4 projection = perspectiveRH(yFov, aspectRatio, 0.01f, 2000f);
+//        Mat4 projection = perspectiveRH(yFov, aspectRatio, 0.01f, 2000f);
+        Mat4 projection = Jglm.perspective(80f, 0.01f, 10000f);
 
 //        projection.print("projection");
 //        view.print("view");
-        switch (stereoMode) {
-
-            case none:
-                render(gl3, StereoEye.center, projection, view);
-                break;
-
-            case leftRight_multipass:
-                break;
-        }
+        render(gl3, projection, view);
 
         checkError(gl3);
     }
 
     // Render the scene for one eye.
-    private void render(GL3 gl3, StereoEye stereoEye, Mat4 projection, Mat4 view) {
+    private void render(GL3 gl3, Mat4 projection, Mat4 view) {
 
         beginScene(gl3);
-
-        applyStereoParams(gl3, stereoEye);
 
         clear(gl3);
 
@@ -241,15 +202,6 @@ public class GlViewer implements GLEventListener {
 
 //        glMatrixMode(GL_MODELVIEW);
 //        glLoadIdentity();
-    }
-
-    private void applyStereoParams(GL3 gl3, StereoEye stereoEye) {
-
-        switch (stereoEye) {
-
-            case center:
-                break;
-        }
     }
 
     private void setRenderTarget(GL3 gl3, int renderTarget) {
@@ -378,35 +330,12 @@ public class GlViewer implements GLEventListener {
         return perspectiveRH;
     }
 
-    public void setStereoMode(StereoMode stereoMode) {
-        this.stereoMode = stereoMode;
-    }
-
     public int getLightingUBB() {
         return lightingUBB;
     }
 
     public int[] getLightingUBO() {
         return lightingUBO;
-    }
-
-    public enum StereoMode {
-
-        none,
-        leftRight_multipass
-    }
-
-    public enum StereoEye {
-
-        center,
-        left,
-        right
-    }
-
-    public enum PostProcess {
-
-        none,
-        distorsion
     }
 
     private void checkError(GL3 gl3) {

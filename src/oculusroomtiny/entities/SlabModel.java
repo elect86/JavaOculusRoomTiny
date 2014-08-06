@@ -6,6 +6,7 @@
 package oculusroomtiny.entities;
 
 import oculusroomtiny.rendering.OculusRoomModel;
+import oculusroomtiny.rendering.Texture;
 
 /**
  *
@@ -15,9 +16,9 @@ public class SlabModel {
 
     private int count;
     private Slab[] slabs;
-    private OculusRoomModel.BuiltinTexture tex;
+    private Texture.BuiltinTexture tex;
 
-    public SlabModel(int count, Slab[] slabs, OculusRoomModel.BuiltinTexture tex) {
+    public SlabModel(int count, Slab[] slabs, Texture.BuiltinTexture tex) {
 
         this.count = count;
         this.slabs = slabs;
@@ -32,7 +33,7 @@ public class SlabModel {
         return slabs;
     }
 
-    public OculusRoomModel.BuiltinTexture getTex() {
+    public Texture.BuiltinTexture getTex() {
         return tex;
     }
 }

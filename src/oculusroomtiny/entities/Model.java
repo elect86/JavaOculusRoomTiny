@@ -14,6 +14,7 @@ import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec3i;
 import oculusroomtiny.rendering.OculusRoomModel;
+import oculusroomtiny.rendering.Texture.BuiltinTexture;
 import oculusroomtiny.rendering.glsl.Program;
 import oculusroomtiny.rendering.glsl.Program1;
 
@@ -31,7 +32,7 @@ public class Model extends Node {
     private int[] ibo;
     private Program program;
     private Program1 program1;
-    public OculusRoomModel.BuiltinTexture builtinTexture;
+    public BuiltinTexture builtinTexture;
     private Texture texture;
     private int[] tex;
     private boolean test = true;
@@ -144,7 +145,7 @@ public class Model extends Node {
 
             buildShader(gl3);
         }
-        if (builtinTexture != OculusRoomModel.BuiltinTexture.tex_none) {
+        if (builtinTexture != BuiltinTexture.tex_none) {
 
             if (texture == null) {
 
@@ -155,19 +156,19 @@ public class Model extends Node {
         renderLight(gl3, projection, view);
     }
 
-    public static Model createModel(Vec3 position, SlabModel slabModels) {
+    public static Model createModel(Vec3 position, SlabModel slabModel) {
 
         Model model = new Model(PrimitiveType.triangles);
 
         model.setPosition(position);
 
-        for (int i = 0; i < slabModels.getCount(); i++) {
+        for (int i = 0; i < slabModel.getCount(); i++) {
 
-            Slab slab = slabModels.getSlabs()[i];
+            Slab slab = slabModel.getSlabs()[i];
 
             model.addSolidColorBox(slab.getP1(), slab.getP2(), slab.getColor());
         }
-        model.builtinTexture = slabModels.getTex();
+        model.builtinTexture = slabModel.getTex();
 
         return model;
     }

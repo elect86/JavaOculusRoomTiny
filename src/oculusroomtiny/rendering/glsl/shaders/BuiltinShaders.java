@@ -4,12 +4,13 @@
  * and open the template in the editor.
  */
 
-package oculusroomtiny.rendering.util;
+package oculusroomtiny.rendering.glsl.shaders;
 
 /**
  *
  * @author gbarbieri
  */
-public class StereoEyeParams {
-    
+public class BuiltinShaders {
+ 
+    public static final String filepath = "/oculusR";
 }

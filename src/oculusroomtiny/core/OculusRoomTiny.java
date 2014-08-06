@@ -39,8 +39,6 @@ public class OculusRoomTiny extends JFrame {
     public OculusRoomTiny() {
 
         scene = new Scene();
-
-        OculusRoomModel.populateRoomScene(scene);
     }
 
     public void init() {
