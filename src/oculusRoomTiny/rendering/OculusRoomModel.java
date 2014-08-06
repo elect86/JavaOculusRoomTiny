@@ -3,19 +3,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.rendering;
+package oculusRoomTiny.rendering;
 
 import javax.media.opengl.GL3;
 import jglm.Vec3;
 import jglm.Vec3i;
 import jglm.Vec4;
-import oculusRoomTiny1.entities.Model;
-import oculusRoomTiny1.entities.Scene;
-import oculusRoomTiny1.entities.Slab;
-import oculusRoomTiny1.entities.SlabModel;
-import static oculusRoomTiny1.rendering.Texture.BuiltinTexture.tex_checker;
-import static oculusRoomTiny1.rendering.Texture.BuiltinTexture.tex_panel;
-import oculusRoomTiny1.rendering.glsl.FillCollection;
+import oculusRoomTiny.entities.Model;
+import oculusRoomTiny.entities.Scene;
+import oculusRoomTiny.entities.Slab;
+import oculusRoomTiny.entities.SlabModel;
+import static oculusRoomTiny.rendering.Texture.BuiltinTexture.tex_checker;
+import static oculusRoomTiny.rendering.Texture.BuiltinTexture.tex_panel;
+import oculusRoomTiny.rendering.glsl.FillCollection;
 
 /**
  *

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package oculusRoomTiny1.entities;
+package oculusRoomTiny.entities;
 
 import javax.media.opengl.GL3;
 import jglm.Mat4;

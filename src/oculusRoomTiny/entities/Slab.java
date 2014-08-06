@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.entities;
+package oculusRoomTiny.entities;
 
 import jglm.Vec3;
 import jglm.Vec3i;

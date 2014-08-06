@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.rendering.glsl;
+package oculusRoomTiny.rendering.glsl;
 
 import glsl.GLSLProgramObject;
-import oculusRoomTiny1.rendering.Texture;
+import oculusRoomTiny.rendering.Texture;
 
 /**
  *

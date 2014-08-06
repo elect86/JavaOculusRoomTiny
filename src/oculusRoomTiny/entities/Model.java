@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.entities;
+package oculusRoomTiny.entities;
 
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.texture.Texture;
@@ -13,14 +13,14 @@ import javax.media.opengl.GL3;
 import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec3i;
-import oculusRoomTiny1.core.OculusRoomTiny;
-import oculusRoomTiny1.rendering.OculusRoomModel;
-import oculusRoomTiny1.rendering.Texture.BuiltinTexture;
-import oculusRoomTiny1.rendering.glsl.FillCollection;
-import oculusRoomTiny1.rendering.glsl.Program;
-import oculusRoomTiny1.rendering.glsl.Program1;
-import oculusRoomTiny1.rendering.glsl.ShaderFill;
-import oculusRoomTiny1.rendering.glsl.LitTexturesProgram;
+import oculusRoomTiny.core.OculusRoomTiny;
+import oculusRoomTiny.rendering.OculusRoomModel;
+import oculusRoomTiny.rendering.Texture.BuiltinTexture;
+import oculusRoomTiny.rendering.glsl.FillCollection;
+import oculusRoomTiny.rendering.glsl.Program;
+import oculusRoomTiny.rendering.glsl.Program1;
+import oculusRoomTiny.rendering.glsl.ShaderFill;
+import oculusRoomTiny.rendering.glsl.LitTexturesProgram;
 
 /**
  *

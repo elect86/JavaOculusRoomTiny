@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.entities;
+package oculusRoomTiny.entities;
 
-import oculusRoomTiny1.rendering.OculusRoomModel;
-import oculusRoomTiny1.rendering.Texture;
+import oculusRoomTiny.rendering.OculusRoomModel;
+import oculusRoomTiny.rendering.Texture;
 
 /**
  *

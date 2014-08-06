@@ -1,4 +1,4 @@
-package oculusRoomTiny1.test;
+package oculusRoomTiny.test;
 
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.util.Animator;

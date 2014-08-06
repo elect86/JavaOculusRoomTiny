@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.core;
+package oculusRoomTiny.core;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
-import oculusRoomTiny1.rendering.GlViewer;
-import oculusRoomTiny1.rendering.OculusRoomModel;
-import oculusRoomTiny1.entities.Scene;
+import oculusRoomTiny.rendering.GlViewer;
+import oculusRoomTiny.rendering.OculusRoomModel;
+import oculusRoomTiny.entities.Scene;
 
 /**
  *

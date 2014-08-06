@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.rendering;
+package oculusRoomTiny.rendering;
 
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.ByteBuffer;

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package oculusRoomTiny1;
+package oculusRoomTiny;
 
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.FloatBuffer;

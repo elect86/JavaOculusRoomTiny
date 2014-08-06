@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.entities;
+package oculusRoomTiny.entities;
 
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.FloatBuffer;
@@ -11,8 +11,8 @@ import javax.media.opengl.GL3;
 import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec4;
-import oculusRoomTiny1.core.OculusRoomTiny;
-import oculusRoomTiny1.rendering.LightingParams;
+import oculusRoomTiny.core.OculusRoomTiny;
+import oculusRoomTiny.rendering.LightingParams;
 
 /**
  *

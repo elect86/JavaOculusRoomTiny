@@ -3,22 +3,24 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny1.rendering.glsl;
+
+package oculusRoomTiny.rendering.glsl;
 
 import javax.media.opengl.GL3;
-import oculusRoomTiny1.core.OculusRoomTiny;
+import oculusRoomTiny.core.OculusRoomTiny;
 
 /**
  *
  * @author gbarbieri
  */
-public class Program1 extends glsl.GLSLProgramObject {
-
+public class LitTexturesProgram extends glsl.GLSLProgramObject {
+    
     private int projectionUL;
     private int viewUL;
     private int texture0UL;
 
-    public Program1(GL3 gl3, String shadersFilepath, String vertexShader, String fragmentShader) {
+    public LitTexturesProgram(GL3 gl3, String shadersFilepath, String vertexShader, String fragmentShader) {
+        
         super(gl3, shadersFilepath, vertexShader, fragmentShader);
 
         projectionUL = gl3.glGetUniformLocation(getProgramId(), "projection");
