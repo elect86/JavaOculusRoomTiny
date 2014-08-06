@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package oculusRoomTiny.rendering.glsl.shaders;
+package oculusRoomTiny1.rendering.glsl.shaders;
 
 /**
  *

@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny;
+package oculusRoomTiny1;
 
-import oculusRoomTiny.rendering.GlViewer;
+import oculusRoomTiny1.rendering.GlViewer;
 import com.jogamp.newt.event.KeyEvent;
 import com.jogamp.newt.event.KeyListener;
 

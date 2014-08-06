@@ -3,17 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny.rendering.glsl;
+package oculusRoomTiny1.rendering.glsl;
 
 import javax.media.opengl.GL3;
 import jglm.Vec2i;
 import jglm.Vec4;
-import oculusRoomTiny.rendering.Texture;
-import static oculusRoomTiny.rendering.Texture.BuiltinTexture.tex_checker;
-import static oculusRoomTiny.rendering.Texture.BuiltinTexture.tex_count;
-import static oculusRoomTiny.rendering.Texture.BuiltinTexture.tex_panel;
-import oculusRoomTiny.rendering.TextureFormat;
-import oculusRoomTiny.rendering.glsl.shaders.BuiltinShaders;
+import oculusRoomTiny1.rendering.Texture;
+import static oculusRoomTiny1.rendering.Texture.BuiltinTexture.tex_checker;
+import static oculusRoomTiny1.rendering.Texture.BuiltinTexture.tex_count;
+import static oculusRoomTiny1.rendering.Texture.BuiltinTexture.tex_panel;
+import oculusRoomTiny1.rendering.TextureFormat;
+import oculusRoomTiny1.rendering.glsl.shaders.BuiltinShaders;
 
 /**
  *

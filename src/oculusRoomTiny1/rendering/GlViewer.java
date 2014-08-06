@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny.rendering;
+package oculusRoomTiny1.rendering;
 
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
@@ -18,8 +18,8 @@ import static jglm.Jglm.calculateFrustumScale;
 import jglm.Mat4;
 import jglm.Quat;
 import jglm.Vec3;
-import oculusRoomTiny.InputListener;
-import oculusRoomTiny.core.OculusRoomTiny;
+import oculusRoomTiny1.InputListener;
+import oculusRoomTiny1.core.OculusRoomTiny;
 
 /**
  *

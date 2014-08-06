@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oculusRoomTiny.entities;
+package oculusRoomTiny1.entities;
 
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.texture.Texture;
@@ -13,14 +13,14 @@ import javax.media.opengl.GL3;
 import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec3i;
-import oculusRoomTiny.core.OculusRoomTiny;
-import oculusRoomTiny.rendering.OculusRoomModel;
-import oculusRoomTiny.rendering.Texture.BuiltinTexture;
-import oculusRoomTiny.rendering.glsl.FillCollection;
-import oculusRoomTiny.rendering.glsl.Program;
-import oculusRoomTiny.rendering.glsl.Program1;
-import oculusRoomTiny.rendering.glsl.ShaderFill;
-import oculusRoomTiny.rendering.glsl.LitTexturesProgram;
+import oculusRoomTiny1.core.OculusRoomTiny;
+import oculusRoomTiny1.rendering.OculusRoomModel;
+import oculusRoomTiny1.rendering.Texture.BuiltinTexture;
+import oculusRoomTiny1.rendering.glsl.FillCollection;
+import oculusRoomTiny1.rendering.glsl.Program;
+import oculusRoomTiny1.rendering.glsl.Program1;
+import oculusRoomTiny1.rendering.glsl.ShaderFill;
+import oculusRoomTiny1.rendering.glsl.LitTexturesProgram;
 
 /**
  *
@@ -144,31 +144,15 @@ public class Model extends Node {
 
             initVBO(gl3);
         }
+        if (ibo == null) {
 
-//        if (program == null) {
-//
-//            buildShader(gl3);
-//        }
-//        if (builtinTexture != BuiltinTexture.tex_none) {
-//
-//            if (texture == null) {
-//
-//                initTexture(gl3);
-//            }
-//        }
-////        renderLit(gl3, projection, view);
-//        renderLight(gl3, projection, view);
+            initIBO(gl3);
+        }
         if (fill.getShader() instanceof LitTexturesProgram) {
 
-            if (OculusRoomTiny.getInstance().frame % 2 == 1) {
-
-                if (ibo == null) {
-
-                    initIBO(gl3);
-                }
-
-                renderLight(gl3, projection, view);
-            }
+//            if (OculusRoomTiny.getInstance().frame % 2 == 1) {
+            renderLight(gl3, projection, view);
+//            }
         }
         OculusRoomTiny.getInstance().frame++;
     }
@@ -308,8 +292,8 @@ public class Model extends Node {
 
         vbo = new int[1];
         gl3.glGenBuffers(1, vbo, 0);
-        System.out.println("vbo "+vbo[0]);
-if (OculusRoomTiny.getInstance().frame % 2 == 1) {
+//        System.out.println("vbo "+vbo[0]);
+//        if (OculusRoomTiny.getInstance().frame % 2 == 1) {
         gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo[0]);
         {
             float[] buffer = new float[vertices.size() * (3 + 4 + 2 + 3)];
@@ -341,7 +325,8 @@ if (OculusRoomTiny.getInstance().frame % 2 == 1) {
 
             gl3.glBufferData(GL3.GL_ARRAY_BUFFER, buffer.length * 4, GLBuffers.newDirectFloatBuffer(buffer), GL3.GL_STATIC_DRAW);
         }
-        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);}
+        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
+//        }
     }
 
     private void initIBO(GL3 gl3) {
