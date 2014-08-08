@@ -20,7 +20,8 @@ import jglm.Quat;
 import jglm.Vec3;
 import roomTinySimplified.InputListener;
 import roomTinySimplified.core.OculusRoomTiny;
-import roomTinySimplified.rendering.glsl.LitTexturesProgram;
+import roomTinySimplified.rendering.glsl.LitSolid;
+import roomTinySimplified.rendering.glsl.LitTexture;
 
 /**
  *
@@ -42,8 +43,9 @@ public class GlViewer implements GLEventListener {
     private Vec3 eyePos;
     private int lightingUBB;
     private int[] lightingUBO;
-    private LitTexturesProgram litTexturesProgram;
-
+    private LitTexture litTexture;
+    private LitSolid litSolid;
+    
     public GlViewer() {
 
         setup();
@@ -113,7 +115,8 @@ public class GlViewer implements GLEventListener {
 
         String shadersFilepath = "/roomTinySimplified/rendering/glsl/shaders/";
         
-        litTexturesProgram = new LitTexturesProgram(gl3, shadersFilepath, "Standard_VS.glsl", "LitTexture_FS.glsl");
+        litTexture = new LitTexture(gl3, shadersFilepath, "LitTexture_VS.glsl", "LitTexture_FS.glsl");
+        litSolid = new LitSolid(gl3, shadersFilepath, "LitSolid_VS.glsl", "LitSolid_FS.glsl");
         
         initUBO(gl3);
         
@@ -178,7 +181,7 @@ public class GlViewer implements GLEventListener {
 
         clear(gl3);
 
-        setDepthMode(gl3, true, true, GL3.GL_LESS);
+//        setDepthMode(gl3, true, true, GL3.GL_LESS);
 
         OculusRoomTiny.getInstance().getScene().render(gl3, projection, view);
 
@@ -194,7 +197,7 @@ public class GlViewer implements GLEventListener {
 
     private void beginRendering(GL3 gl3) {
 
-//        gl3.glEnable(GL3.GL_DEPTH_TEST);
+        gl3.glEnable(GL3.GL_DEPTH_TEST);
         gl3.glEnable(GL3.GL_CULL_FACE);
         gl3.glFrontFace(GL3.GL_CW);
 
@@ -202,9 +205,6 @@ public class GlViewer implements GLEventListener {
         gl3.glEnable(GL3.GL_LINE_SMOOTH);
         gl3.glEnable(GL3.GL_BLEND);
         gl3.glBlendFunc(GL3.GL_SRC_ALPHA, GL3.GL_ONE_MINUS_SRC_ALPHA);
-
-//        glMatrixMode(GL_MODELVIEW);
-//        glLoadIdentity();
     }
 
     private void setRenderTarget(GL3 gl3, int renderTarget) {
@@ -215,8 +215,8 @@ public class GlViewer implements GLEventListener {
     private void clear(GL3 gl3) {
 
         gl3.glClearColor(0f, 0f, 0f, 1f);
-        gl3.glClearDepthf(1f);
-        gl3.glClear(GL3.GL_COLOR_BUFFER_BIT | GL3.GL_DEPTH_BUFFER_BIT | GL3.GL_STENCIL_BUFFER_BIT);
+//        gl3.glClearDepthf(1f);
+        gl3.glClear(GL3.GL_COLOR_BUFFER_BIT | GL3.GL_DEPTH_BUFFER_BIT);
     }
 
     private void setDepthMode(GL3 gl3, boolean enable, boolean write, int func) {
@@ -350,7 +350,11 @@ public class GlViewer implements GLEventListener {
         }
     }
 
-    public LitTexturesProgram getLitTexturesProgram() {
-        return litTexturesProgram;
+    public LitTexture getLitTexture() {
+        return litTexture;
+    }
+
+    public LitSolid getLitSolid() {
+        return litSolid;
     }
 }

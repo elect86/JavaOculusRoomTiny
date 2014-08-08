@@ -16,7 +16,9 @@ import roomTinySimplified.core.OculusRoomTiny;
 import roomTinySimplified.rendering.OculusRoomModel;
 import roomTinySimplified.rendering.Texture;
 import roomTinySimplified.rendering.Texture.BuiltinTexture;
-import roomTinySimplified.rendering.glsl.LitTexturesProgram;
+import static roomTinySimplified.rendering.Texture.BuiltinTexture.tex_none;
+import roomTinySimplified.rendering.glsl.LitSolid;
+import roomTinySimplified.rendering.glsl.LitTexture;
 
 /**
  *
@@ -117,7 +119,7 @@ public final class Model {
 //                    + " c(" + c.x + ", " + c.y + ", " + c.z + "), u " + cubeVertices[v][1].x + ", v " + cubeVertices[v][1].y
 //                    + ", norm(" + cubeVertices[v][2].x + ", " + cubeVertices[v][2].y + ", " + cubeVertices[v][2].z + ")");
         }
-
+        System.out.println("startIndex "+startIndex);
         for (int i = 0; i < cubeIndexCount / 3; i++) {
 
             indices.add(cubeIndices[i * 3] + startIndex);
@@ -140,72 +142,23 @@ public final class Model {
 
             initIBO(gl3);
         }
-        if (builtinTexture != BuiltinTexture.tex_none) {
+        if (builtinTexture == BuiltinTexture.tex_none) {
+
+            renderLitSolid(gl3, projection, view);
+
+        } else {
 
             if (texture == null) {
-                
+
                 texture = Texture.createBuiltinTexture(gl3, builtinTexture);
             }
             renderLitTexture(gl3, projection, view);
-        }        
+        }
     }
 
-    private void renderLit(GL3 gl3, Mat4 projection, Mat4 view) {
+    private void renderLitSolid(GL3 gl3, Mat4 projection, Mat4 view) {
 
-//        program.bind(gl3);
-//        {
-//            if (test) {
-////                test = false;
-//                gl3.glUniformMatrix4fv(program.getProjectionUL(), 1, false, projection.toFloatArray(), 0);
-//                gl3.glUniformMatrix4fv(program.getViewUL(), 1, false, view.toFloatArray(), 0);
-////                projection.print("projection");
-////                view.print("view");
-//            }
-//
-//            gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo[0]);
-//            {
-//                for (int i = 0; i < 4; i++) {
-//
-//                    gl3.glEnableVertexAttribArray(i);
-//                }
-//                gl3.glVertexAttribPointer(0, 3, GL3.GL_FLOAT, false, (3 + 4 + 2 + 3) * 4, 0);
-//                gl3.glVertexAttribPointer(1, 4, GL3.GL_FLOAT, false, (3 + 4 + 2 + 3) * 4, 3 * 4);
-//                gl3.glVertexAttribPointer(2, 2, GL3.GL_FLOAT, false, (3 + 4 + 2 + 3) * 4, 7 * 4);
-//                gl3.glVertexAttribPointer(3, 3, GL3.GL_FLOAT, false, (3 + 4 + 2 + 3) * 4, 9 * 4);
-//
-//                if (indices != null) {
-//
-//                    gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
-//                    {
-//                        gl3.glEnable(GL3.GL_TEXTURE_2D);
-//                        {
-//                            gl3.glActiveTexture(GL3.GL_TEXTURE0);
-//                            gl3.glUniform1i(program.getTexture0UL(), 0);
-//                            gl3.glBindTexture(GL3.GL_TEXTURE_2D, tex[0]);
-//                            {
-////                                System.out.println("render");
-//                                gl3.glDrawElements(primitiveType, indices.size(), GL3.GL_UNSIGNED_INT, ibo[0]);
-//                            }
-//                            gl3.glBindTexture(GL3.GL_TEXTURE_2D, 0);
-//                        }
-//                        gl3.glDisable(GL3.GL_TEXTURE_2D);
-//                    }
-//                    gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
-//                }
-//
-//                for (int i = 0; i < 4; i++) {
-//
-//                    gl3.glDisableVertexAttribArray(i);
-//                }
-//            }
-//            gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
-//        }
-//        program.unbind(gl3);
-    }
-
-    private void renderLitTexture(GL3 gl3, Mat4 projection, Mat4 view) {
-
-        LitTexturesProgram program = OculusRoomTiny.getInstance().getGlViewer().getLitTexturesProgram();
+        LitSolid program = OculusRoomTiny.getInstance().getGlViewer().getLitSolid();
 
         program.bind(gl3);
         {
@@ -213,7 +166,46 @@ public final class Model {
             gl3.glUniformMatrix4fv(program.getViewUL(), 1, false, view.toFloatArray(), 0);
 //                projection.print("projection");
 //                view.print("view");
-//            }
+
+            gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo[0]);
+            {
+                for (int i = 0; i < 3; i++) {
+
+                    gl3.glEnableVertexAttribArray(i);
+                }
+                gl3.glVertexAttribPointer(0, 3, GL3.GL_FLOAT, false, (3 + 4 + 3) * 4, 0);
+                gl3.glVertexAttribPointer(1, 4, GL3.GL_FLOAT, false, (3 + 4 + 3) * 4, 3 * 4);
+                gl3.glVertexAttribPointer(2, 3, GL3.GL_FLOAT, false, (3 + 4 + 3) * 4, 7 * 4);
+
+                if (indices != null) {
+
+                    gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
+                    {
+//                        System.out.println("render");
+                        gl3.glDrawElements(primitiveType, indices.size(), GL3.GL_UNSIGNED_INT, ibo[0]);
+                    }
+                    gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
+                }
+                for (int i = 0; i < 3; i++) {
+
+                    gl3.glDisableVertexAttribArray(i);
+                }
+            }
+            gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
+        }
+        program.unbind(gl3);
+    }
+
+    private void renderLitTexture(GL3 gl3, Mat4 projection, Mat4 view) {
+
+        LitTexture program = OculusRoomTiny.getInstance().getGlViewer().getLitTexture();
+
+        program.bind(gl3);
+        {
+            gl3.glUniformMatrix4fv(program.getProjectionUL(), 1, false, projection.toFloatArray(), 0);
+            gl3.glUniformMatrix4fv(program.getViewUL(), 1, false, view.toFloatArray(), 0);
+//                projection.print("projection");
+//                view.print("view");
 
             gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo[0]);
             {
@@ -238,13 +230,12 @@ public final class Model {
                             {
                                 gl3.glDrawElements(primitiveType, indices.size(), GL3.GL_UNSIGNED_INT, ibo[0]);
                             }
-                            gl3.glBindTexture(GL3.GL_TEXTURE_2D, 0);
+//                            gl3.glBindTexture(GL3.GL_TEXTURE_2D, 0);
                         }
                         gl3.glDisable(GL3.GL_TEXTURE_2D);
                     }
                     gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
                 }
-
                 for (int i = 0; i < 4; i++) {
 
                     gl3.glDisableVertexAttribArray(i);
@@ -263,33 +254,60 @@ public final class Model {
 //        if (OculusRoomTiny.getInstance().frame % 2 == 1) {
         gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo[0]);
         {
-            float[] buffer = new float[vertices.size() * (3 + 4 + 2 + 3)];
+            float[] buffer;
 
-            for (int i = 0; i < vertices.size(); i++) {
-                // Position
-                buffer[i * (3 + 4 + 2 + 3)] = vertices.get(i).getPos().x;
-                buffer[i * (3 + 4 + 2 + 3) + 1] = vertices.get(i).getPos().y;
-                buffer[i * (3 + 4 + 2 + 3) + 2] = vertices.get(i).getPos().z;
-                // Color
-                buffer[i * (3 + 4 + 2 + 3) + 3] = (float) vertices.get(i).getC().x;
-                buffer[i * (3 + 4 + 2 + 3) + 4] = (float) vertices.get(i).getC().y;
-                buffer[i * (3 + 4 + 2 + 3) + 5] = (float) vertices.get(i).getC().z;
+            if (builtinTexture == tex_none) {
+
+                int vertexSize = 3 + 4 + 3;
+
+                buffer = new float[vertices.size() * vertexSize];
+
+                for (int i = 0; i < vertices.size(); i++) {
+                    // Position
+                    buffer[i * vertexSize] = vertices.get(i).getPos().x;
+                    buffer[i * vertexSize + 1] = vertices.get(i).getPos().y;
+                    buffer[i * vertexSize + 2] = vertices.get(i).getPos().z;
+                    // Color
+                    buffer[i * vertexSize + 3] = (float) vertices.get(i).getC().x;
+                    buffer[i * vertexSize + 4] = (float) vertices.get(i).getC().y;
+                    buffer[i * vertexSize + 5] = (float) vertices.get(i).getC().z;
+                    buffer[i * vertexSize + 6] = 1;
+                    // Normal
+                    buffer[i * vertexSize + 7] = vertices.get(i).getNorm().x;
+                    buffer[i * vertexSize + 8] = vertices.get(i).getNorm().y;
+                    buffer[i * vertexSize + 9] = vertices.get(i).getNorm().z;
+                }
+            } else {
+
+                int vertexSize = 3 + 4 + 2 + 3;
+
+                buffer = new float[vertices.size() * vertexSize];
+
+                for (int i = 0; i < vertices.size(); i++) {
+                    // Position
+                    buffer[i * vertexSize] = vertices.get(i).getPos().x;
+                    buffer[i * vertexSize + 1] = vertices.get(i).getPos().y;
+                    buffer[i * vertexSize + 2] = vertices.get(i).getPos().z;
+                    // Color
+                    buffer[i * vertexSize + 3] = (float) vertices.get(i).getC().x;
+                    buffer[i * vertexSize + 4] = (float) vertices.get(i).getC().y;
+                    buffer[i * vertexSize + 5] = (float) vertices.get(i).getC().z;
 //                buffer[i * (3 + 4 + 2 + 3) + 3] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 4] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 5] = 1;
-                buffer[i * (3 + 4 + 2 + 3) + 6] = 1;
+                    buffer[i * vertexSize + 6] = 1;
 //                System.out.println(""+(float) vertices.get(i).getC().x / 255f);
 //                System.out.println(""+(float) vertices.get(i).getC().y / 255f);
 //                System.out.println(""+(float) vertices.get(i).getC().z / 255f);
-                // UV
-                buffer[i * (3 + 4 + 2 + 3) + 7] = vertices.get(i).getU();
-                buffer[i * (3 + 4 + 2 + 3) + 8] = vertices.get(i).getV();
-                // Normal
-                buffer[i * (3 + 4 + 2 + 3) + 9] = vertices.get(i).getNorm().x;
-                buffer[i * (3 + 4 + 2 + 3) + 10] = vertices.get(i).getNorm().y;
-                buffer[i * (3 + 4 + 2 + 3) + 11] = vertices.get(i).getNorm().z;
+                    // UV
+                    buffer[i * vertexSize + 7] = vertices.get(i).getU();
+                    buffer[i * vertexSize + 8] = vertices.get(i).getV();
+                    // Normal
+                    buffer[i * vertexSize + 9] = vertices.get(i).getNorm().x;
+                    buffer[i * vertexSize + 10] = vertices.get(i).getNorm().y;
+                    buffer[i * vertexSize + 11] = vertices.get(i).getNorm().z;
+                }
             }
-
             gl3.glBufferData(GL3.GL_ARRAY_BUFFER, buffer.length * 4, GLBuffers.newDirectFloatBuffer(buffer), GL3.GL_STATIC_DRAW);
         }
         gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
@@ -299,12 +317,24 @@ public final class Model {
     private void initIBO(GL3 gl3) {
 
         ibo = new int[1];
-
         gl3.glGenBuffers(1, ibo, 0);
+
+        int[] buffer = new int[indices.size()];
+
+        for (int i = 0; i < indices.size(); i++) {
+
+            buffer[i] = indices.get(i);
+        }
+
+        for (int i = 0; i < indices.size() / 3; i++) {
+
+            System.out.println("Triangle " + buffer[i * 3 + 0] + " " + buffer[i * 3 + 1] + " " + buffer[i * 3 + 2]);
+        }
 
         gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
         {
-            gl3.glBufferData(GL3.GL_ELEMENT_ARRAY_BUFFER, cubeIndices.length * 4, GLBuffers.newDirectIntBuffer(cubeIndices), GL3.GL_STATIC_DRAW);
+            gl3.glBufferData(GL3.GL_ELEMENT_ARRAY_BUFFER, buffer.length * 4,
+                    GLBuffers.newDirectIntBuffer(buffer), GL3.GL_STATIC_DRAW);
         }
         gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
     }

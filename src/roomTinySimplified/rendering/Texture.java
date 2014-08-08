@@ -117,6 +117,32 @@ public class Texture {
                     }
                 }
                 break;
+
+            default:
+
+                a = new Vec4(60f, 60f, 60f, 255f);
+
+                b = new Vec4(180f, 180f, 180f, 255f);
+
+                for (int j = 0; j < 256; j++) {
+
+                    for (int i = 0; i < 256; i++) {
+
+                        boolean c = ((j / 4 & 15) == 0) || (((i / 4 & 15) == 0) && ((((i / 4 & 31) == 0) ^ (((j / 4 >> 4) & 1)== 1)) == false));
+                        
+                        Vec4 color = c ? a : b;
+//                        boolean c = ((j / 4 & 15) == 0) || ((i / 4 & 15) == 0);
+//                        int d = ((i / 4 & 31) == 0) ? 0 : 1;
+//                        d = d ^ (j / 4 >> 4);
+//                        boolean e = c && (d == 1);
+//                        Vec4 color = e ? a : b;
+
+                        data[(j * 256 + i) * 4] = (byte) color.x;
+                        data[(j * 256 + i) * 4 + 1] = (byte) color.y;
+                        data[(j * 256 + i) * 4 + 2] = (byte) color.z;
+                        data[(j * 256 + i) * 4 + 3] = (byte) color.w;
+                    }
+                }
         }
         return Texture.create(gl3, RGBA, new Vec2i(256, 256), data);
     }
