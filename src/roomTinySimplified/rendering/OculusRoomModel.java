@@ -33,9 +33,9 @@ public class OculusRoomModel {
 
 //        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), floor));
 //        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), ceiling));
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), room));
+        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), room));
 //        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), fixtures));
-        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), furniture));
+//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), furniture));
 //        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 4f), furniture));
 
         scene.setAmbient(new Vec4(0.65f, 0.65f, 0.65f, 1f));

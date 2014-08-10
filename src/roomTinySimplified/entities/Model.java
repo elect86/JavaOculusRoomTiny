@@ -119,7 +119,7 @@ public final class Model {
 //                    + " c(" + c.x + ", " + c.y + ", " + c.z + "), u " + cubeVertices[v][1].x + ", v " + cubeVertices[v][1].y
 //                    + ", norm(" + cubeVertices[v][2].x + ", " + cubeVertices[v][2].y + ", " + cubeVertices[v][2].z + ")");
         }
-        System.out.println("startIndex "+startIndex);
+        System.out.println("startIndex " + startIndex);
         for (int i = 0; i < cubeIndexCount / 3; i++) {
 
             indices.add(cubeIndices[i * 3] + startIndex);
@@ -264,7 +264,7 @@ public final class Model {
 
                 for (int i = 0; i < vertices.size(); i++) {
                     // Position
-                    buffer[i * vertexSize] = vertices.get(i).getPos().x;
+                    buffer[i * vertexSize + 0] = vertices.get(i).getPos().x;
                     buffer[i * vertexSize + 1] = vertices.get(i).getPos().y;
                     buffer[i * vertexSize + 2] = vertices.get(i).getPos().z;
                     // Color
@@ -285,7 +285,7 @@ public final class Model {
 
                 for (int i = 0; i < vertices.size(); i++) {
                     // Position
-                    buffer[i * vertexSize] = vertices.get(i).getPos().x;
+                    buffer[i * vertexSize + 0] = vertices.get(i).getPos().x;
                     buffer[i * vertexSize + 1] = vertices.get(i).getPos().y;
                     buffer[i * vertexSize + 2] = vertices.get(i).getPos().z;
                     // Color
@@ -306,6 +306,10 @@ public final class Model {
                     buffer[i * vertexSize + 9] = vertices.get(i).getNorm().x;
                     buffer[i * vertexSize + 10] = vertices.get(i).getNorm().y;
                     buffer[i * vertexSize + 11] = vertices.get(i).getNorm().z;
+
+                    System.out.println("vertex " + i + " Position " + vertices.get(i).getPos().x + " " + vertices.get(i).getPos().y + " " + vertices.get(i).getPos().z
+                            + " Color " + vertices.get(i).getC().x + " " + vertices.get(i).getC().y + " " + vertices.get(i).getC().z + " u " + vertices.get(i).getU()
+                            + " v " + vertices.get(i).getV() + " normal " + vertices.get(i).getNorm().x + " " + vertices.get(i).getNorm().y + " " + vertices.get(i).getNorm().z);
                 }
             }
             gl3.glBufferData(GL3.GL_ARRAY_BUFFER, buffer.length * 4, GLBuffers.newDirectFloatBuffer(buffer), GL3.GL_STATIC_DRAW);
