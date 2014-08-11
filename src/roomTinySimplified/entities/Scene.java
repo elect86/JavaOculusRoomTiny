@@ -82,15 +82,17 @@ public class Scene {
 
         for (int i = 0; i < lightCount; i++) {
 
-            fs[3 + 1 + i * 4] = lighting.getLightPos()[i].x;
+            fs[3 + 1 + i * 4 + 0] = lighting.getLightPos()[i].x;
             fs[3 + 1 + i * 4 + 1] = lighting.getLightPos()[i].y;
             fs[3 + 1 + i * 4 + 2] = lighting.getLightPos()[i].z;
             fs[3 + 1 + i * 4 + 3] = lighting.getLightPos()[i].w;
 
-            fs[3 + 1 + 4 * 8 + i * 4] = lighting.getLightColor()[i].x / 255;
-            fs[3 + 1 + 4 * 8 + i * 4 + 1] = lighting.getLightColor()[i].y / 255;
-            fs[3 + 1 + 4 * 8 + i * 4 + 2] = lighting.getLightColor()[i].z / 255;
-            fs[3 + 1 + 4 * 8 + i * 4 + 3] = lighting.getLightColor()[i].w / 255;
+            float factor = 1f;
+
+            fs[3 + 1 + 4 * 8 + i * 4 + 0] = lighting.getLightColor()[i].x / factor;
+            fs[3 + 1 + 4 * 8 + i * 4 + 1] = lighting.getLightColor()[i].y / factor;
+            fs[3 + 1 + 4 * 8 + i * 4 + 2] = lighting.getLightColor()[i].z / factor;
+            fs[3 + 1 + 4 * 8 + i * 4 + 3] = lighting.getLightColor()[i].w / factor;
         }
 
         FloatBuffer floatBuffer = GLBuffers.newDirectFloatBuffer(fs);

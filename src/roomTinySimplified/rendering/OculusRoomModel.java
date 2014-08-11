@@ -31,19 +31,21 @@ public class OculusRoomModel {
 
     public static void populateRoomScene(GL3 gl3, Scene scene) {
 
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), floor));
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), ceiling));
-        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), room));
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), fixtures));
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 0f), furniture));
-//        scene.addModel(new Model(GL3.GL_TRIANGLES, new Vec3(0f, 0f, 4f), furniture));
+        scene.addModel(new Model(new Vec3(0f, 0f, 0f), floor));
+        scene.addModel(new Model(new Vec3(0f, 0f, 0f), ceiling));
+        scene.addModel(new Model(new Vec3(0f, 0f, 0f), room));
+        scene.addModel(new Model(new Vec3(0f, 0f, 0f), fixtures));
+        scene.addModel(new Model(new Vec3(0f, 0f, 0f), furniture));
+        scene.addModel(new Model(new Vec3(0f, 0f, 4f), furniture));
+        scene.addModel(new Model(new Vec3(-3f, 0f, 3f), posts));
 
         scene.setAmbient(new Vec4(0.65f, 0.65f, 0.65f, 1f));
-        scene.addLight(new Vec3(-2f, 4f, -2f), new Vec4(8f, 8f, 8f, 1f));
-        scene.addLight(new Vec3(3f, 4f, -3f), new Vec4(2f, 1f, 1f, 1f));
-        scene.addLight(new Vec3(-4f, 3f, 25f), new Vec4(3f, 6f, 3f, 1f));
+        float factor = 255f;
+        scene.addLight(new Vec3(-2f, 4f, -2f), new Vec4(8f / factor, 8f / factor, 8f / factor, 1f));
+        scene.addLight(new Vec3(3f, 4f, -3f), new Vec4(2f / factor, 1f / factor, 1f / factor, 1f));
+        scene.addLight(new Vec3(-4f, 3f, 25f), new Vec4(3f / factor, 6f / factor, 3f / factor, 1f));
     }
-    
+
     private static final Slab[] floorSlabs = new Slab[]{
         new Slab(new Vec3(-10f, -0.1f, -20f), new Vec3(10f, 0f, 20.1f), new Vec3i(128, 128, 128))
     };
@@ -110,6 +112,22 @@ public class OculusRoomModel {
         new Slab(new Vec3(-0.8f, 1.0f, -1.1f), new Vec3(-0.8f - 0.06f, 0.0f, -1.1f + 0.06f), new Vec3i(88, 88, 128)), // Leg 2
         new Slab(new Vec3(-1.4f, 0.97f, -1.05f), new Vec3(-0.8f, 0.92f, -1.10f), new Vec3i(88, 88, 128)) // Back high bar
     };
-    
+
     private static final SlabModel furniture = new SlabModel(furnitureSlabs.length, furnitureSlabs, tex_none);
+
+    private static final Slab[] postsSlabs = new Slab[]{
+        // Posts
+        new Slab(new Vec3(0, 0.0f, 0.0f), new Vec3(0.1f, 1.3f, 0.1f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 0.4f), new Vec3(0.1f, 1.3f, 0.5f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 0.8f), new Vec3(0.1f, 1.3f, 0.9f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 1.2f), new Vec3(0.1f, 1.3f, 1.3f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 1.6f), new Vec3(0.1f, 1.3f, 1.7f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 2.0f), new Vec3(0.1f, 1.3f, 2.1f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 2.4f), new Vec3(0.1f, 1.3f, 2.5f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 2.8f), new Vec3(0.1f, 1.3f, 2.9f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 3.2f), new Vec3(0.1f, 1.3f, 3.3f), new Vec3i(128, 128, 128)),
+        new Slab(new Vec3(0, 0.0f, 3.6f), new Vec3(0.1f, 1.3f, 3.7f), new Vec3i(128, 128, 128))
+    };
+    
+    private static final SlabModel posts = new SlabModel(postsSlabs.length, postsSlabs, tex_none);
 }
