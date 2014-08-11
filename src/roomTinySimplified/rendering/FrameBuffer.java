@@ -66,12 +66,12 @@ public class FrameBuffer {
 
     }
 
-    public int[] getTextureId() {
-        return textureId;
+    public int getTextureId() {
+        return textureId[0];
     }
 
-    public int[] getId() {
-        return id;
+    public int getId() {
+        return id[0];
     }
 
     public OvrSizei getSize() {

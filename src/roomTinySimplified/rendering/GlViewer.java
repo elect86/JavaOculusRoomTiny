@@ -8,6 +8,9 @@ package roomTinySimplified.rendering;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.util.Animator;
+import com.jogamp.opengl.util.GLBuffers;
+import com.jogamp.opengl.util.GLReadBufferUtil;
+import com.jogamp.opengl.util.texture.TextureIO;
 import com.oculusvr.capi.DistortionMesh;
 import com.oculusvr.capi.DistortionVertex;
 import com.oculusvr.capi.EyeRenderDesc;
@@ -23,14 +26,23 @@ import static com.oculusvr.capi.OvrLibrary.ovrHmdType.ovrHmd_DK1;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_MagYawCorrection;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_Orientation;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_Position;
+import com.oculusvr.capi.OvrMatrix4f;
 import com.oculusvr.capi.OvrRecti;
 import com.oculusvr.capi.OvrSizei;
 import com.oculusvr.capi.OvrVector2f;
 import com.oculusvr.capi.OvrVector2i;
+import com.oculusvr.capi.Posef;
+import java.io.File;
+import java.io.IOException;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLException;
 import javax.media.opengl.GLProfile;
 import jglm.Jglm;
 import static jglm.Jglm.calculateFrustumScale;
@@ -38,8 +50,10 @@ import jglm.Mat4;
 import jglm.Quat;
 import jglm.Vec2;
 import jglm.Vec3;
+import jglm.Vec4;
 import roomTinySimplified.InputListener;
 import roomTinySimplified.core.OculusRoomTiny;
+import roomTinySimplified.rendering.glsl.Distortion;
 import roomTinySimplified.rendering.glsl.LitSolid;
 import roomTinySimplified.rendering.glsl.LitTexture;
 
@@ -60,12 +74,11 @@ public class GlViewer implements GLEventListener {
     private float yawInitial;
     private float sensitivity;
     private float moveSpeed;
-    private Vec3 headPos;
     private int lightingUBB;
     private int[] lightingUBO;
     private LitTexture litTexture;
     private LitSolid litSolid;
-    
+
     private HmdDesc hmdDesc;
     private OvrRecti[] eyeRenderViewport;
     private int frameCount;
@@ -73,7 +86,9 @@ public class GlViewer implements GLEventListener {
     private EyeRenderDesc[] eyeRenderDescs;
     private OvrVector2f[][] uvScaleOffset;
     private int indicesCount;
-    
+    private Distortion distortion;
+    private int[][] distortionObjects;
+
     public GlViewer() {
 
         setup();
@@ -130,15 +145,13 @@ public class GlViewer implements GLEventListener {
         sensitivity = 1f;
         moveSpeed = 3f;
 
-        headPos = new Vec3(0f, 1.6f, -5f);
-
         lightingUBB = 0;
-        
+
         setupOculus();
     }
-    
+
     private void setupOculus() {
-        
+
         System.out.println("setupOculus()");
         // Initializes LibOVR, and the Rift
         HmdDesc.initialize();
@@ -161,7 +174,7 @@ public class GlViewer implements GLEventListener {
 
         System.out.println("/setupOculus()");
     }
-    
+
     private static HmdDesc openFirstHmd() {
         HmdDesc hmdDesc = HmdDesc.create(0);
         if (hmdDesc == null) {
@@ -177,17 +190,17 @@ public class GlViewer implements GLEventListener {
         GL3 gl3 = glad.getGL().getGL3();
 
         String shadersFilepath = "/roomTinySimplified/rendering/glsl/shaders/";
-        
+
         litTexture = new LitTexture(gl3, shadersFilepath, "LitTexture_VS.glsl", "LitTexture_FS.glsl");
         litSolid = new LitSolid(gl3, shadersFilepath, "LitSolid_VS.glsl", "LitSolid_FS.glsl");
-        
+
         initUBO(gl3);
-        
-        OculusRoomModel.populateRoomScene(gl3, OculusRoomTiny.getInstance().getScene());
-        
+
         initOculus(gl3);
+
+        OculusRoomModel.populateRoomScene(gl3, OculusRoomTiny.getInstance().getScene());
     }
-    
+
     private void initOculus(GL3 gl3) {
         //Configure Stereo settings.
         OvrSizei recommendedTex0Size = hmdDesc.getFovTextureSize(ovrEye_Left, hmdDesc.DefaultEyeFov[0], 1f);
@@ -207,9 +220,6 @@ public class GlViewer implements GLEventListener {
         eyeRenderViewport[1].Pos = new OvrVector2i((renderTargetSize.w + 1) / 2, 0);
         eyeRenderViewport[1].Size = eyeRenderViewport[0].Size;
 
-//        ibo = new int[IboBuffer.count.ordinal()];
-//        gl3.glGenBuffers(IboBuffer.count.ordinal(), ibo, 0);
-
         uvScaleOffset = new OvrVector2f[2][2];
         /**
          * Hardcoded.
@@ -220,9 +230,11 @@ public class GlViewer implements GLEventListener {
         uvScaleOffset[ovrEye_Right][1] = new OvrVector2f(0.658931f, 0.5f);
         eyeRenderDescs = new EyeRenderDesc[2];
 
+        distortion = new Distortion(gl3, "/roomTinySimplified/rendering/glsl/shaders/", "Distortion_VS.glsl", "Distortion_FS.glsl");
+
+        distortionObjects = new int[ovrEye_Count][DistortionObjects.count.ordinal()];
+
         for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
-//        if (1 == 1) {
-//            int eyeNum = 0;
 
             int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp;
 
@@ -231,14 +243,14 @@ public class GlViewer implements GLEventListener {
             DistortionVertex[] distortionVertices = new DistortionVertex[meshData.VertexCount];
             meshData.pVertexData.toArray(distortionVertices);
             {
-//                initDistortionVBO(gl3, eyeNum, distortionVertices);
+                initDistortionVBOs(gl3, eyeNum, distortionVertices);
             }
             short[] indicesData = meshData.pIndexData.getPointer().getShortArray(0, meshData.IndexCount);
             indicesCount = indicesData.length;
             {
-//                initDistortionIBO(gl3, eyeNum, indicesData);
+                initDistortionIBO(gl3, eyeNum, indicesData);
             }
-//            initDistortionVAO(gl3, eyeNum);
+            initDistortionVAO(gl3, eyeNum);
 
             eyeRenderDescs[eyeNum] = hmdDesc.getRenderDesc(eyeNum, eyeFov[eyeNum]);
 
@@ -248,6 +260,80 @@ public class GlViewer implements GLEventListener {
         hmdDesc.setEnabledCaps(OvrLibrary.ovrHmdCaps.ovrHmdCap_LowPersistence | OvrLibrary.ovrHmdCaps.ovrHmdCap_DynamicPrediction);
 
         hmdDesc.configureTracking(ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
+    }
+
+    private void initDistortionVBOs(GL3 gl3, int eyeNum, DistortionVertex[] structures) {
+
+        int vertexSize = 2 + 1 + 1 + 2 + 2 + 2;
+        float[] vertexData = new float[vertexSize * structures.length];
+
+        for (int v = 0; v < structures.length; v++) {
+
+            vertexData[v * vertexSize + 0] = structures[v].ScreenPosNDC.x;
+            vertexData[v * vertexSize + 1] = structures[v].ScreenPosNDC.y;
+            vertexData[v * vertexSize + 2] = structures[v].TimeWarpFactor;
+            vertexData[v * vertexSize + 3] = structures[v].VignetteFactor;
+            vertexData[v * vertexSize + 4] = structures[v].TanEyeAnglesR.x;
+            vertexData[v * vertexSize + 5] = structures[v].TanEyeAnglesR.y;
+            vertexData[v * vertexSize + 6] = structures[v].TanEyeAnglesG.x;
+            vertexData[v * vertexSize + 7] = structures[v].TanEyeAnglesG.y;
+            vertexData[v * vertexSize + 8] = structures[v].TanEyeAnglesB.x;
+            vertexData[v * vertexSize + 9] = structures[v].TanEyeAnglesB.y;
+        }
+
+        gl3.glGenBuffers(1, distortionObjects[eyeNum], DistortionObjects.vbo.ordinal());
+        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.vbo.ordinal()]);
+        {
+            FloatBuffer fb = GLBuffers.newDirectFloatBuffer(vertexData);
+
+            gl3.glBufferData(GL3.GL_ARRAY_BUFFER, vertexData.length * 4, fb, GL3.GL_STATIC_DRAW);
+        }
+        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
+    }
+
+    private void initDistortionIBO(GL3 gl3, int eyeNum, short[] shortIndicesData) {
+
+        int[] intIndicesData = new int[shortIndicesData.length];
+
+        for (int i = 0; i < shortIndicesData.length; i++) {
+
+            intIndicesData[i] = shortIndicesData[i];
+        }
+
+        gl3.glGenBuffers(1, distortionObjects[eyeNum], DistortionObjects.ibo.ordinal());
+        gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.ibo.ordinal()]);
+        {
+            IntBuffer intBuffer = GLBuffers.newDirectIntBuffer(intIndicesData);
+
+            gl3.glBufferData(GL3.GL_ELEMENT_ARRAY_BUFFER, intIndicesData.length * 4, intBuffer, GL3.GL_STATIC_DRAW);
+        }
+        gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    private void initDistortionVAO(GL3 gl3, int eyeNum) {
+
+        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.vbo.ordinal()]);
+        {
+            gl3.glGenVertexArrays(1, distortionObjects[eyeNum], DistortionObjects.vao.ordinal());
+            gl3.glBindVertexArray(distortionObjects[eyeNum][DistortionObjects.vao.ordinal()]);
+            {
+                gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.ibo.ordinal()]);
+
+                for (int attrib = 0; attrib < 6; attrib++) {
+
+                    gl3.glEnableVertexAttribArray(attrib);
+                }
+                int stride = 10 * 4;
+                gl3.glVertexAttribPointer(0, 2, GL3.GL_FLOAT, false, stride, 0);
+                gl3.glVertexAttribPointer(1, 1, GL3.GL_FLOAT, false, stride, 2 * 4);
+                gl3.glVertexAttribPointer(2, 1, GL3.GL_FLOAT, false, stride, (2 + 1) * 4);
+                gl3.glVertexAttribPointer(3, 2, GL3.GL_FLOAT, false, stride, (2 + 1 + 1) * 4);
+                gl3.glVertexAttribPointer(4, 2, GL3.GL_FLOAT, false, stride, (2 + 1 + 1 + 2) * 4);
+                gl3.glVertexAttribPointer(5, 2, GL3.GL_FLOAT, false, stride, (2 + 1 + 1 + 2 + 2) * 4);
+            }
+            gl3.glBindVertexArray(0);
+        }
+        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
     }
 
     @Override
@@ -262,26 +348,121 @@ public class GlViewer implements GLEventListener {
     public void display(GLAutoDrawable glad) {
 
 //        System.out.println("display");
+        Posef[] eyeRenderPose = new Posef[2];
         GL3 gl3 = glad.getGL().getGL3();
 
-        /**
-         * Rotate and position View Camera, using YawPitchRoll in BodyFrame
-         * coordinates.
-         */
-        Quat rollPitchYaw = Jglm.angleAxis(180, new Vec3(0f, 1f, 0f));
-        Vec3 finalUp = rollPitchYaw.mult(upVector);
-        Vec3 finalForward = rollPitchYaw.mult(forwardVector);
-        
-        Mat4 view = lookAt(headPos, headPos.plus(finalForward), finalUp);
+        hmdDesc.beginFrameTiming(++frameCount);
+        {
+            float bodyYaw = (float) Math.PI;
+            Vec3 headPos = new Vec3(0f, 1.6f, -5f);
 
-//        Mat4 projection = perspectiveRH(yFov, aspectRatio, 0.01f, 2000f);
-        Mat4 projection = Jglm.perspective(80f, 0.01f, 10000f);
+            beginRendering(gl3);
+            {
+                // Render the two undistorted eye views into their render buffers.
+                gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, frameBuffer.getId());
+                clear(gl3);
 
-//        projection.print("projection");
-//        view.print("view");
-        render(gl3, projection, view);
+                for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++) {
 
+                    int eye = hmdDesc.EyeRenderOrder[eyeIndex];
+                    eyeRenderPose[eye] = hmdDesc.getEyePose(eye);
+
+                    // Get view and projection matrices
+                    Mat4 rollPitchYaw = Mat4.rotationY(bodyYaw);
+
+                    Quat orientation = new Quat(eyeRenderPose[eye].Orientation.x, eyeRenderPose[eye].Orientation.y,
+                            eyeRenderPose[eye].Orientation.z, eyeRenderPose[eye].Orientation.w);
+                    Mat4 finalRollPitchYaw = rollPitchYaw.mult(orientation.toMatrix());
+
+                    Vec4 finalUp = finalRollPitchYaw.mult(new Vec4(0f, 1f, 0f, 1f));
+
+                    Vec4 finalForward = finalRollPitchYaw.mult(new Vec4(0f, 0f, -1f, 1f));
+
+                    Mat4 view = lookAt(headPos, headPos.plus(new Vec3(finalForward)), new Vec3(finalUp));
+
+                    Mat4 proj = createProjection(eyeRenderDescs[eye].Fov, .01f, 10000f);
+
+//                view.print("view");
+//                proj.print("proj");
+                    gl3.glViewport(eyeRenderViewport[eye].Pos.x, eyeRenderViewport[eye].Pos.y,
+                            eyeRenderViewport[eye].Size.w, eyeRenderViewport[eye].Size.h);
+
+                    Vec3 offset = new Vec3(eyeRenderDescs[eye].ViewAdjust.x,
+                            eyeRenderDescs[eye].ViewAdjust.y, eyeRenderDescs[eye].ViewAdjust.z);
+
+                    view = Mat4.translate(offset).mult(view);
+
+                    OculusRoomTiny.getInstance().getScene().render(gl3, proj, view);
+                }
+            }
+            endRendering(gl3);
+//            saveImage(gl3);
+
+            // Clear screen
+            gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, 0);
+            gl3.glDrawBuffer(GL3.GL_BACK);
+            gl3.glViewport(0, 0, glWindow.getWidth(), glWindow.getHeight());
+            gl3.glDisable(GL3.GL_DEPTH_TEST);
+            gl3.glClear(GL3.GL_COLOR_BUFFER_BIT);
+
+            // Setup shader
+            distortion.bind(gl3);
+            {
+                gl3.glActiveTexture(GL3.GL_TEXTURE0);
+                gl3.glBindTexture(GL3.GL_TEXTURE_2D, frameBuffer.getTextureId());
+                gl3.glUniform1i(distortion.getTexture0UL(), 0);
+
+                for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
+
+                    // Get and set shader constants
+                    gl3.glUniform2f(distortion.getEyeToSourceUVscaleUL(), uvScaleOffset[eyeNum][0].x, uvScaleOffset[eyeNum][0].y);
+                    gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(), uvScaleOffset[eyeNum][1].x, uvScaleOffset[eyeNum][1].y);
+
+                    OvrMatrix4f[] timeWarpMatricesRowMajor = new OvrMatrix4f[2];
+                    hmdDesc.getEyeTimewarpMatrices(eyeNum, hmdDesc.getEyePose(eyeNum), timeWarpMatricesRowMajor);
+                    gl3.glUniformMatrix4fv(distortion.getEyeRotationStartUL(), 1, true, timeWarpMatricesRowMajor[0].M, 0);
+                    gl3.glUniformMatrix4fv(distortion.getEyeRotationEndUL(), 1, true, timeWarpMatricesRowMajor[1].M, 0);
+
+                    gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.vbo.ordinal()]);
+                    {
+                        gl3.glBindVertexArray(distortionObjects[eyeNum][DistortionObjects.vao.ordinal()]);
+                        {
+                            gl3.glDrawElements(GL3.GL_TRIANGLES, indicesCount, GL3.GL_UNSIGNED_INT, 0);
+                        }
+                        gl3.glBindVertexArray(0);
+                    }
+                    gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
+                }
+            }
+            distortion.unbind(gl3);
+//            render(gl3, projection, view);
+        }
+        hmdDesc.endFrameTiming();
         checkError(gl3);
+    }
+
+    private void saveImage(GL3 gl3) {
+
+        GLReadBufferUtil bufferUtil = new GLReadBufferUtil(true, true);
+
+        bufferUtil.readPixels(gl3, 0, 0, frameBuffer.getSize().w, frameBuffer.getSize().h, false);
+
+        com.jogamp.opengl.util.texture.Texture texture = bufferUtil.getTexture();
+
+        try {
+            TextureIO.write(texture, new File("D:\\Downloads\\texture.png"));
+        } catch (IOException | GLException ex) {
+            Logger.getLogger(GlViewer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+//        BufferedImage image = Screenshot.readToBufferedImage(frameBuffer.getSize().w, frameBuffer.getSize().h);
+//                
+//        File file = new File("D:\\Downloads\\texture.png");
+//        try {
+//            ImageIO.write(image, "png", file);
+//        } catch (IOException ex) {
+//            Logger.getLogger(GlViewer.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     // Render the scene for one eye.
@@ -292,17 +473,14 @@ public class GlViewer implements GLEventListener {
         clear(gl3);
 
 //        setDepthMode(gl3, true, true, GL3.GL_LESS);
-
         OculusRoomTiny.getInstance().getScene().render(gl3, projection, view);
-
-        finishScene(gl3);
     }
 
     private void beginScene(GL3 gl3) {
 
         beginRendering(gl3);
 
-        setRenderTarget(gl3, 0);
+        gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, 0);
     }
 
     private void beginRendering(GL3 gl3) {
@@ -317,34 +495,16 @@ public class GlViewer implements GLEventListener {
         gl3.glBlendFunc(GL3.GL_SRC_ALPHA, GL3.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    private void setRenderTarget(GL3 gl3, int renderTarget) {
+    private void endRendering(GL3 gl3) {
 
-        gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, renderTarget);
+        gl3.glDisable(GL3.GL_DEPTH_TEST);
     }
 
     private void clear(GL3 gl3) {
 
         gl3.glClearColor(0f, 0f, 0f, 1f);
-//        gl3.glClearDepthf(1f);
+        gl3.glClearDepthf(1f);
         gl3.glClear(GL3.GL_COLOR_BUFFER_BIT | GL3.GL_DEPTH_BUFFER_BIT);
-    }
-
-    private void setDepthMode(GL3 gl3, boolean enable, boolean write, int func) {
-
-        if (enable) {
-
-            gl3.glEnable(GL3.GL_DEPTH_TEST);
-            gl3.glDepthMask(write);
-            gl3.glDepthFunc(GL3.GL_LESS);
-
-        } else {
-
-            gl3.glDisable(GL3.GL_DEPTH_TEST);
-        }
-    }
-
-    private void finishScene(GL3 gl3) {
-
     }
 
     @Override
@@ -352,8 +512,8 @@ public class GlViewer implements GLEventListener {
 
         System.out.println("reshape (" + i + ", " + i1 + ") (" + i2 + ", " + i3 + ")");
 
-        GL3 gl3 = glad.getGL().getGL3();
-        gl3.glViewport(i, i1, i2, i3);
+//        GL3 gl3 = glad.getGL().getGL3();
+//        gl3.glViewport(i, i1, i2, i3);
     }
 
     private void initUBO(GL3 gl3) {
@@ -406,7 +566,7 @@ public class GlViewer implements GLEventListener {
         Vec3 z = (eye.minus(at)).normalize();   // Forward
         Vec3 x = (up.crossProduct(z)).normalize();  // Right
         Vec3 y = z.crossProduct(x);
-        
+
         return new Mat4(new float[]{
             x.x, y.x, z.x, 0,
             x.y, y.y, z.y, 0,
@@ -428,7 +588,7 @@ public class GlViewer implements GLEventListener {
 
         return perspectiveRH;
     }
-    
+
     private Mat4 createProjection(FovPort tanHalfFov, float zNear, float zFar) {
 
         ScaleAndOffset scaleAndOffset = createNDCscaleAndOffset(tanHalfFov);
@@ -469,7 +629,7 @@ public class GlViewer implements GLEventListener {
 
         return new ScaleAndOffset(new Vec2(projXscale, projYscale), new Vec2(projXoffset, projYoffset));
     }
-    
+
     private class ScaleAndOffset {
 
         public Vec2 scale;
@@ -505,5 +665,13 @@ public class GlViewer implements GLEventListener {
 
     public LitSolid getLitSolid() {
         return litSolid;
+    }
+
+    private enum DistortionObjects {
+
+        vbo,
+        ibo,
+        vao,
+        count
     }
 }

@@ -46,6 +46,7 @@ public class OculusRoomTiny extends JFrame {
         glViewer = new GlViewer();
 
         setSize(1280 + (1280 - 1264), 800 + (800 - 762));
+//        setSize(2300, 1600);
         add(glViewer.getNewtCanvasAWT());
 
         addWindowListener(new WindowAdapter() {
