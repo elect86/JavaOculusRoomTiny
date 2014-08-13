@@ -4,7 +4,6 @@ out vec4 outputColor;
 
 uniform sampler2D texture0;
 
-in vec4 oPosition;
 in vec2 oTexCoord0;
 in vec2 oTexCoord1;
 in vec2 oTexCoord2;

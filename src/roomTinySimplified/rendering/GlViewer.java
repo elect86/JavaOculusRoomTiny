@@ -15,7 +15,7 @@ import com.oculusvr.capi.DistortionMesh;
 import com.oculusvr.capi.DistortionVertex;
 import com.oculusvr.capi.EyeRenderDesc;
 import com.oculusvr.capi.FovPort;
-import com.oculusvr.capi.HmdDesc;
+import com.oculusvr.capi.Hmd;
 import com.oculusvr.capi.OvrLibrary;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_Chromatic;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_TimeWarp;
@@ -44,7 +44,6 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
 import javax.media.opengl.GLProfile;
-import jglm.Jglm;
 import static jglm.Jglm.calculateFrustumScale;
 import jglm.Mat4;
 import jglm.Quat;
@@ -79,7 +78,7 @@ public class GlViewer implements GLEventListener {
     private LitTexture litTexture;
     private LitSolid litSolid;
 
-    private HmdDesc hmdDesc;
+    private Hmd hmd;
     private OvrRecti[] eyeRenderViewport;
     private int frameCount;
     private FrameBuffer frameBuffer;
@@ -88,6 +87,7 @@ public class GlViewer implements GLEventListener {
     private int indicesCount;
     private Distortion distortion;
     private int[][] distortionObjects;
+    float bodyYaw;
 
     public GlViewer() {
 
@@ -106,16 +106,11 @@ public class GlViewer implements GLEventListener {
          */
         newtCanvasAWT = new NewtCanvasAWT(glWindow);
 
-//        newtCanvasAWT.setSize(1280, 800);
-//        initViewPole();
-//        inputListener = new EC_InputListener(this, viewPole, new EC_InputsState());
-//
-//        glWindow.addMouseListener(inputListener);
-//        glWindow.addKeyListener(inputListener);
 //        glWindow.setSize(1280, 800);
         glWindow.addGLEventListener(this);
         inputListener = new InputListener(this);
         glWindow.addKeyListener(inputListener);
+        glWindow.addMouseListener(inputListener);
 
         fullscreen = false;
         glWindow.setFullscreen(fullscreen);
@@ -141,7 +136,7 @@ public class GlViewer implements GLEventListener {
         forwardVector = new Vec3(0f, 0f, -1f);
         rightVector = new Vec3(1f, 0f, 0f);
 
-        yawInitial = 3.141592f;
+        bodyYaw = (float) Math.PI;;
         sensitivity = 1f;
         moveSpeed = 3f;
 
@@ -154,7 +149,7 @@ public class GlViewer implements GLEventListener {
 
         System.out.println("setupOculus()");
         // Initializes LibOVR, and the Rift
-        HmdDesc.initialize();
+        Hmd.initialize();
 
         try {
             Thread.sleep(400);
@@ -162,12 +157,12 @@ public class GlViewer implements GLEventListener {
             throw new IllegalStateException(e);
         }
 
-        hmdDesc = openFirstHmd();
+        hmd = openFirstHmd();
 
-        if (null == hmdDesc) {
+        if (null == hmd) {
             throw new IllegalStateException("Unable to initialize HMD");
         }
-        if (hmdDesc.configureTracking(ovrTrackingCap_Orientation, 0) == 0) {
+        if (hmd.configureTracking(ovrTrackingCap_Orientation, 0) == 0) {
             throw new IllegalStateException("Unable to start the sensor");
         }
         frameCount = -1;
@@ -175,12 +170,12 @@ public class GlViewer implements GLEventListener {
         System.out.println("/setupOculus()");
     }
 
-    private static HmdDesc openFirstHmd() {
-        HmdDesc hmdDesc = HmdDesc.create(0);
-        if (hmdDesc == null) {
-            hmdDesc = HmdDesc.createDebug(ovrHmd_DK1);
+    private static Hmd openFirstHmd() {
+        Hmd hmd = Hmd.create(0);
+        if (hmd == null) {
+            hmd = Hmd.createDebug(ovrHmd_DK1);
         }
-        return hmdDesc;
+        return hmd;
     }
 
     @Override
@@ -203,8 +198,8 @@ public class GlViewer implements GLEventListener {
 
     private void initOculus(GL3 gl3) {
         //Configure Stereo settings.
-        OvrSizei recommendedTex0Size = hmdDesc.getFovTextureSize(ovrEye_Left, hmdDesc.DefaultEyeFov[0], 1f);
-        OvrSizei recommendedTex1Size = hmdDesc.getFovTextureSize(ovrEye_Right, hmdDesc.DefaultEyeFov[1], 1f);
+        OvrSizei recommendedTex0Size = hmd.getFovTextureSize(ovrEye_Left, hmd.DefaultEyeFov[0], 1f);
+        OvrSizei recommendedTex1Size = hmd.getFovTextureSize(ovrEye_Right, hmd.DefaultEyeFov[1], 1f);
         int x = recommendedTex0Size.w + recommendedTex1Size.w;
         int y = Math.max(recommendedTex0Size.h, recommendedTex1Size.h);
         OvrSizei renderTargetSize = new OvrSizei(x, y);
@@ -212,7 +207,7 @@ public class GlViewer implements GLEventListener {
 //        Texture pRenderTargetTexture = Texture.create(gl3, TextureFormat.RGBA, renderTargetSize, null);
         frameBuffer = new FrameBuffer(gl3, renderTargetSize);
         // Initialize eye rendering information.
-        FovPort[] eyeFov = new FovPort[]{hmdDesc.DefaultEyeFov[0], hmdDesc.DefaultEyeFov[1]};
+        FovPort[] eyeFov = new FovPort[]{hmd.DefaultEyeFov[0], hmd.DefaultEyeFov[1]};
 
         eyeRenderViewport = new OvrRecti[]{new OvrRecti(), new OvrRecti()};
         eyeRenderViewport[0].Pos = new OvrVector2i(0, 0);
@@ -221,13 +216,13 @@ public class GlViewer implements GLEventListener {
         eyeRenderViewport[1].Size = eyeRenderViewport[0].Size;
 
         uvScaleOffset = new OvrVector2f[2][2];
-        /**
-         * Hardcoded.
-         */
-        uvScaleOffset[ovrEye_Left][0] = new OvrVector2f(0.163722f, 0.233835f);
-        uvScaleOffset[ovrEye_Left][1] = new OvrVector2f(0.341069f, 0.5f);
-        uvScaleOffset[ovrEye_Right][0] = new OvrVector2f(0.163722f, 0.233835f);
-        uvScaleOffset[ovrEye_Right][1] = new OvrVector2f(0.658931f, 0.5f);
+//        /**
+//         * Hardcoded.
+//         */
+//        uvScaleOffset[ovrEye_Left][0] = new OvrVector2f(0.163722f, 0.233835f);
+//        uvScaleOffset[ovrEye_Left][1] = new OvrVector2f(0.341069f, 0.5f);
+//        uvScaleOffset[ovrEye_Right][0] = new OvrVector2f(0.163722f, 0.233835f);
+//        uvScaleOffset[ovrEye_Right][1] = new OvrVector2f(0.658931f, 0.5f);
         eyeRenderDescs = new EyeRenderDesc[2];
 
         distortion = new Distortion(gl3, "/roomTinySimplified/rendering/glsl/shaders/", "Distortion_VS.glsl", "Distortion_FS.glsl");
@@ -238,7 +233,7 @@ public class GlViewer implements GLEventListener {
 
             int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp;
 
-            DistortionMesh meshData = hmdDesc.createDistortionMesh(eyeNum, eyeFov[eyeNum], distortionCaps);
+            DistortionMesh meshData = hmd.createDistortionMesh(eyeNum, eyeFov[eyeNum], distortionCaps);
 
             DistortionVertex[] distortionVertices = new DistortionVertex[meshData.VertexCount];
             meshData.pVertexData.toArray(distortionVertices);
@@ -252,14 +247,13 @@ public class GlViewer implements GLEventListener {
             }
             initDistortionVAO(gl3, eyeNum);
 
-            eyeRenderDescs[eyeNum] = hmdDesc.getRenderDesc(eyeNum, eyeFov[eyeNum]);
+            eyeRenderDescs[eyeNum] = hmd.getRenderDesc(eyeNum, eyeFov[eyeNum]);
 
-//            OvrLibrary.INSTANCE.ovrHmd_GetRenderScaleAndOffset((FovPort.ByValue) eyeFov[eyeNum], (OvrSizei.ByValue) frameBuffer.getSize(),
-//                    (OvrRecti.ByValue) eyeRenderViewport[eyeNum], uvScaleOffset[eyeNum]);            
+            uvScaleOffset[eyeNum] = Hmd.getRenderScaleAndOffset(eyeFov[eyeNum], renderTargetSize, eyeRenderViewport[eyeNum]);
         }
-        hmdDesc.setEnabledCaps(OvrLibrary.ovrHmdCaps.ovrHmdCap_LowPersistence | OvrLibrary.ovrHmdCaps.ovrHmdCap_DynamicPrediction);
+        hmd.setEnabledCaps(OvrLibrary.ovrHmdCaps.ovrHmdCap_LowPersistence | OvrLibrary.ovrHmdCaps.ovrHmdCap_DynamicPrediction);
 
-        hmdDesc.configureTracking(ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
+        hmd.configureTracking(ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
     }
 
     private void initDistortionVBOs(GL3 gl3, int eyeNum, DistortionVertex[] structures) {
@@ -270,7 +264,7 @@ public class GlViewer implements GLEventListener {
         for (int v = 0; v < structures.length; v++) {
 
             vertexData[v * vertexSize + 0] = structures[v].ScreenPosNDC.x;
-            vertexData[v * vertexSize + 1] = structures[v].ScreenPosNDC.y;
+            vertexData[v * vertexSize + 1] = -structures[v].ScreenPosNDC.y;
             vertexData[v * vertexSize + 2] = structures[v].TimeWarpFactor;
             vertexData[v * vertexSize + 3] = structures[v].VignetteFactor;
             vertexData[v * vertexSize + 4] = structures[v].TanEyeAnglesR.x;
@@ -351,11 +345,18 @@ public class GlViewer implements GLEventListener {
         Posef[] eyeRenderPose = new Posef[2];
         GL3 gl3 = glad.getGL().getGL3();
 
-        hmdDesc.beginFrameTiming(++frameCount);
+        hmd.beginFrameTiming(++frameCount);
         {
-            float bodyYaw = (float) Math.PI;
             Vec3 headPos = new Vec3(0f, 1.6f, -5f);
 
+            bodyYaw += inputListener.retrieveMouseYaw();
+
+            if (eyeRenderPose != null) {
+
+//                Quat quat = new Quat(eyeRenderPose[1].Orientation.x, eyeRenderPose[1].Orientation.y,
+//                        eyeRenderPose[1].Orientation.z, eyeRenderPose[1].Orientation.w);
+//                headPos = inputListener.updateEyePos(headPos, bodyYaw, quat);
+            }
             beginRendering(gl3);
             {
                 // Render the two undistorted eye views into their render buffers.
@@ -364,8 +365,8 @@ public class GlViewer implements GLEventListener {
 
                 for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++) {
 
-                    int eye = hmdDesc.EyeRenderOrder[eyeIndex];
-                    eyeRenderPose[eye] = hmdDesc.getEyePose(eye);
+                    int eye = hmd.EyeRenderOrder[eyeIndex];
+                    eyeRenderPose[eye] = hmd.getEyePose(eye);
 
                     // Get view and projection matrices
                     Mat4 rollPitchYaw = Mat4.rotationY(bodyYaw);
@@ -419,7 +420,7 @@ public class GlViewer implements GLEventListener {
                     gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(), uvScaleOffset[eyeNum][1].x, uvScaleOffset[eyeNum][1].y);
 
                     OvrMatrix4f[] timeWarpMatricesRowMajor = new OvrMatrix4f[2];
-                    hmdDesc.getEyeTimewarpMatrices(eyeNum, hmdDesc.getEyePose(eyeNum), timeWarpMatricesRowMajor);
+                    hmd.getEyeTimewarpMatrices(eyeNum, hmd.getEyePose(eyeNum), timeWarpMatricesRowMajor);
                     gl3.glUniformMatrix4fv(distortion.getEyeRotationStartUL(), 1, true, timeWarpMatricesRowMajor[0].M, 0);
                     gl3.glUniformMatrix4fv(distortion.getEyeRotationEndUL(), 1, true, timeWarpMatricesRowMajor[1].M, 0);
 
@@ -437,7 +438,7 @@ public class GlViewer implements GLEventListener {
             distortion.unbind(gl3);
 //            render(gl3, projection, view);
         }
-        hmdDesc.endFrameTiming();
+        hmd.endFrameTiming();
         checkError(gl3);
     }
 
@@ -486,7 +487,7 @@ public class GlViewer implements GLEventListener {
     private void beginRendering(GL3 gl3) {
 
         gl3.glEnable(GL3.GL_DEPTH_TEST);
-        gl3.glDisable(GL3.GL_CULL_FACE);
+//        gl3.glEnable(GL3.GL_CULL_FACE);
         gl3.glFrontFace(GL3.GL_CW);
 
         gl3.glLineWidth(3.0f);
