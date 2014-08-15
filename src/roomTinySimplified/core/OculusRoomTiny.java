@@ -5,9 +5,11 @@
  */
 package roomTinySimplified.core;
 
+import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import roomTinySimplified.entities.Scene;
 import roomTinySimplified.rendering.GlViewer;
 
@@ -47,6 +49,20 @@ public class OculusRoomTiny extends JFrame {
 
         setSize(1280 + (1280 - 1264), 800 + (800 - 762));
 //        setSize(2300, 1600);
+//        this.setUndecorated(true);
+        
+        
+//        JPanel p1 = new JPanel();
+//        JPanel p2 = new JPanel();
+//        p1.setLayout(new BorderLayout());
+//        p2.setLayout(new BorderLayout());
+//        
+//        this.getContentPane().setLayout(new BorderLayout());
+//        this.getContentPane().add(p1,BorderLayout.CENTER);
+//        p1.add(p2,BorderLayout.CENTER);
+//        
+//        p2.add(glViewer.getNewtCanvasAWT(),BorderLayout.CENTER);
+        
         add(glViewer.getNewtCanvasAWT());
 
         addWindowListener(new WindowAdapter() {

@@ -264,7 +264,7 @@ public class GlViewer implements GLEventListener {
         for (int v = 0; v < structures.length; v++) {
 
             vertexData[v * vertexSize + 0] = structures[v].ScreenPosNDC.x;
-            vertexData[v * vertexSize + 1] = -structures[v].ScreenPosNDC.y;
+            vertexData[v * vertexSize + 1] = structures[v].ScreenPosNDC.y;
             vertexData[v * vertexSize + 2] = structures[v].TimeWarpFactor;
             vertexData[v * vertexSize + 3] = structures[v].VignetteFactor;
             vertexData[v * vertexSize + 4] = structures[v].TanEyeAnglesR.x;
@@ -273,6 +273,11 @@ public class GlViewer implements GLEventListener {
             vertexData[v * vertexSize + 7] = structures[v].TanEyeAnglesG.y;
             vertexData[v * vertexSize + 8] = structures[v].TanEyeAnglesB.x;
             vertexData[v * vertexSize + 9] = structures[v].TanEyeAnglesB.y;
+
+//            System.out.println("ScreenPosNDC (" + structures[v].ScreenPosNDC.x + ", " + structures[v].ScreenPosNDC.y + ")");
+//            System.out.println("TanEyeAnglesR (" + structures[v].TanEyeAnglesR.x + ", " + structures[v].TanEyeAnglesR.y
+//                    + ") TanEyeAnglesG (" + structures[v].TanEyeAnglesG.x + ", " + structures[v].TanEyeAnglesG.y
+//                    + ") TanEyeAnglesB (" + structures[v].TanEyeAnglesB.x + ", " + structures[v].TanEyeAnglesB.y + ")");
         }
 
         gl3.glGenBuffers(1, distortionObjects[eyeNum], DistortionObjects.vbo.ordinal());
@@ -416,8 +421,10 @@ public class GlViewer implements GLEventListener {
                 for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
 
                     // Get and set shader constants
-                    gl3.glUniform2f(distortion.getEyeToSourceUVscaleUL(), uvScaleOffset[eyeNum][0].x, uvScaleOffset[eyeNum][0].y);
-                    gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(), uvScaleOffset[eyeNum][1].x, uvScaleOffset[eyeNum][1].y);
+                    gl3.glUniform2f(distortion.getEyeToSourceUVscaleUL(),
+                            uvScaleOffset[eyeNum][0].x, -uvScaleOffset[eyeNum][0].y);
+                    gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(),
+                            uvScaleOffset[eyeNum][1].x, 1 - uvScaleOffset[eyeNum][1].y);
 
                     OvrMatrix4f[] timeWarpMatricesRowMajor = new OvrMatrix4f[2];
                     hmd.getEyeTimewarpMatrices(eyeNum, hmd.getEyePose(eyeNum), timeWarpMatricesRowMajor);
@@ -487,7 +494,7 @@ public class GlViewer implements GLEventListener {
     private void beginRendering(GL3 gl3) {
 
         gl3.glEnable(GL3.GL_DEPTH_TEST);
-//        gl3.glEnable(GL3.GL_CULL_FACE);
+        gl3.glEnable(GL3.GL_CULL_FACE);
         gl3.glFrontFace(GL3.GL_CW);
 
         gl3.glLineWidth(3.0f);
