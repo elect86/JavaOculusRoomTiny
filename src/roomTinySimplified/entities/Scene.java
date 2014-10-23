@@ -87,7 +87,7 @@ public class Scene {
             fs[3 + 1 + i * 4 + 2] = lighting.getLightPos()[i].z;
             fs[3 + 1 + i * 4 + 3] = lighting.getLightPos()[i].w;
 
-            float factor = 1f;
+            float factor = 1;
 
             fs[3 + 1 + 4 * 8 + i * 4 + 0] = lighting.getLightColor()[i].x / factor;
             fs[3 + 1 + 4 * 8 + i * 4 + 1] = lighting.getLightColor()[i].y / factor;

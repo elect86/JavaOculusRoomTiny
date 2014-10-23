@@ -35,4 +35,5 @@ vec4 doLight(){
 void main(){
 
     outputColor = doLight() * oColor;
+    //outputColor = vec4(oNormal, 1);
 }

@@ -39,12 +39,12 @@ public class OculusRoomTiny extends JFrame {
     public int frame = 0;
 
     public OculusRoomTiny() {
-
+        
         scene = new Scene();
     }
 
     public void init() {
-
+        
         glViewer = new GlViewer();
 
         setSize(1280 + (1280 - 1264), 800 + (800 - 762));

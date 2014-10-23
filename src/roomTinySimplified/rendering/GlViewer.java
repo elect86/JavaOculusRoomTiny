@@ -5,9 +5,14 @@
  */
 package roomTinySimplified.rendering;
 
+import com.jogamp.newt.Display;
+import com.jogamp.newt.MonitorDevice;
+import com.jogamp.newt.NewtFactory;
+import com.jogamp.newt.Screen;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.util.Animator;
+import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.GLReadBufferUtil;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -19,10 +24,13 @@ import com.oculusvr.capi.Hmd;
 import com.oculusvr.capi.OvrLibrary;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_Chromatic;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_TimeWarp;
+import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_Vignette;
 import static com.oculusvr.capi.OvrLibrary.ovrEyeType.ovrEye_Count;
 import static com.oculusvr.capi.OvrLibrary.ovrEyeType.ovrEye_Left;
 import static com.oculusvr.capi.OvrLibrary.ovrEyeType.ovrEye_Right;
-import static com.oculusvr.capi.OvrLibrary.ovrHmdType.ovrHmd_DK1;
+import static com.oculusvr.capi.OvrLibrary.ovrHmdCaps.ovrHmdCap_DynamicPrediction;
+import static com.oculusvr.capi.OvrLibrary.ovrHmdCaps.ovrHmdCap_LowPersistence;
+import static com.oculusvr.capi.OvrLibrary.ovrHmdType.ovrHmd_DK2;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_MagYawCorrection;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_Orientation;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.ovrTrackingCap_Position;
@@ -36,6 +44,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.media.opengl.GL3;
@@ -66,6 +76,7 @@ public class GlViewer implements GLEventListener {
     private NewtCanvasAWT newtCanvasAWT;
     private boolean fullscreen;
     private InputListener inputListener;
+//    private FPSAnimator animator;
     private Animator animator;
     private Vec3 upVector;
     private Vec3 forwardVector;
@@ -87,7 +98,11 @@ public class GlViewer implements GLEventListener {
     private int indicesCount;
     private Distortion distortion;
     private int[][] distortionObjects;
-    float bodyYaw;
+    private float bodyYaw;
+    private Screen screen;
+    private List<MonitorDevice> monitorDevices;
+    private Vec3 originalPosition;
+    private Vec3 headPos;
 
     public GlViewer() {
 
@@ -95,11 +110,26 @@ public class GlViewer implements GLEventListener {
     }
 
     private void setup() {
+        System.out.println("setup()");
         GLProfile gLProfile = GLProfile.getDefault();
 
         GLCapabilities gLCapabilities = new GLCapabilities(gLProfile);
 
-        glWindow = GLWindow.create(gLCapabilities);
+        Display display = NewtFactory.createDisplay(null);
+
+        screen = NewtFactory.createScreen(display, 0);
+        long start = System.currentTimeMillis();
+        System.out.println("screen.addReference();");
+        screen.addReference();
+        monitorDevices = new ArrayList<>();
+        monitorDevices.add(screen.getMonitorDevices().get(2));
+        screen.removeReference();
+        System.out.println("/screen.addReference(); " + (System.currentTimeMillis() - start));
+//        System.out.println("" + screen.getMonitorDevices().size());
+//        glWindow = GLWindow.create(gLCapabilities);
+        glWindow = GLWindow.create(screen, gLCapabilities);
+
+//        glWindow.getMainMonitor();
         /*
          *  We combine NEWT GLWindow inside existing AWT application (the main JFrame)
          *  by encapsulating the glWindow inside a NewtCanvasAWT canvas.
@@ -116,6 +146,7 @@ public class GlViewer implements GLEventListener {
         glWindow.setFullscreen(fullscreen);
 
         animator = new Animator(glWindow);
+//        animator = new FPSAnimator(glWindow, 60);
         animator.start();
 
 //        glWindow.setVisible(true);
@@ -136,7 +167,9 @@ public class GlViewer implements GLEventListener {
         forwardVector = new Vec3(0f, 0f, -1f);
         rightVector = new Vec3(1f, 0f, 0f);
 
-        bodyYaw = (float) Math.PI;;
+        headPos = new Vec3(0f, 1.6f, -5f);
+
+        bodyYaw = (float) Math.PI;
         sensitivity = 1f;
         moveSpeed = 3f;
 
@@ -162,7 +195,7 @@ public class GlViewer implements GLEventListener {
         if (null == hmd) {
             throw new IllegalStateException("Unable to initialize HMD");
         }
-        if (hmd.configureTracking(ovrTrackingCap_Orientation, 0) == 0) {
+        if (hmd.configureTracking(ovrTrackingCap_Orientation | ovrTrackingCap_Position, 0) == 0) {
             throw new IllegalStateException("Unable to start the sensor");
         }
         frameCount = -1;
@@ -173,7 +206,7 @@ public class GlViewer implements GLEventListener {
     private static Hmd openFirstHmd() {
         Hmd hmd = Hmd.create(0);
         if (hmd == null) {
-            hmd = Hmd.createDebug(ovrHmd_DK1);
+            hmd = Hmd.createDebug(ovrHmd_DK2);
         }
         return hmd;
     }
@@ -193,7 +226,7 @@ public class GlViewer implements GLEventListener {
 
         initOculus(gl3);
 
-        OculusRoomModel.populateRoomScene(gl3, OculusRoomTiny.getInstance().getScene());
+        OculusRoomModel.populateRoomScene(OculusRoomTiny.getInstance().getScene());
     }
 
     private void initOculus(GL3 gl3) {
@@ -231,7 +264,7 @@ public class GlViewer implements GLEventListener {
 
         for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
 
-            int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp;
+            int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp | ovrDistortionCap_Vignette;
 
             DistortionMesh meshData = hmd.createDistortionMesh(eyeNum, eyeFov[eyeNum], distortionCaps);
 
@@ -251,7 +284,7 @@ public class GlViewer implements GLEventListener {
 
             uvScaleOffset[eyeNum] = Hmd.getRenderScaleAndOffset(eyeFov[eyeNum], renderTargetSize, eyeRenderViewport[eyeNum]);
         }
-        hmd.setEnabledCaps(OvrLibrary.ovrHmdCaps.ovrHmdCap_LowPersistence | OvrLibrary.ovrHmdCaps.ovrHmdCap_DynamicPrediction);
+        hmd.setEnabledCaps(ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
 
         hmd.configureTracking(ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
     }
@@ -352,7 +385,7 @@ public class GlViewer implements GLEventListener {
 
         hmd.beginFrameTiming(++frameCount);
         {
-            Vec3 headPos = new Vec3(0f, 1.6f, -5f);
+//            Vec3 headPos = new Vec3(0f, 1.6f, -5f);
 
             bodyYaw += inputListener.retrieveMouseYaw();
 
@@ -376,6 +409,8 @@ public class GlViewer implements GLEventListener {
                     // Get view and projection matrices
                     Mat4 rollPitchYaw = Mat4.rotationY(bodyYaw);
 
+//                    System.out.println("(" + eyeRenderPose[eye].Position.x + ", "
+//                            + eyeRenderPose[eye].Position.y + ", " + eyeRenderPose[eye].Position.z + ")");
                     Quat orientation = new Quat(eyeRenderPose[eye].Orientation.x, eyeRenderPose[eye].Orientation.y,
                             eyeRenderPose[eye].Orientation.z, eyeRenderPose[eye].Orientation.w);
                     Mat4 finalRollPitchYaw = rollPitchYaw.mult(orientation.toMatrix());
@@ -384,7 +419,12 @@ public class GlViewer implements GLEventListener {
 
                     Vec4 finalForward = finalRollPitchYaw.mult(new Vec4(0f, 0f, -1f, 1f));
 
-                    Mat4 view = lookAt(headPos, headPos.plus(new Vec3(finalForward)), new Vec3(finalUp));
+                    Vec4 eyePosition = new Vec4(eyeRenderPose[eye].Position.x, eyeRenderPose[eye].Position.y,
+                            eyeRenderPose[eye].Position.z, 1f);
+                    Vec3 shiftedEyePos = new Vec3((new Vec4(headPos, 1f)).plus(rollPitchYaw.mult(eyePosition)));
+
+//                    Mat4 view = lookAt(headPos, headPos.plus(new Vec3(finalForward)), new Vec3(finalUp));
+                    Mat4 view = lookAt(shiftedEyePos, shiftedEyePos.plus(new Vec3(finalForward)), new Vec3(finalUp));
 
                     Mat4 proj = createProjection(eyeRenderDescs[eye].Fov, .01f, 10000f);
 
@@ -399,6 +439,11 @@ public class GlViewer implements GLEventListener {
                     view = Mat4.translate(offset).mult(view);
 
                     OculusRoomTiny.getInstance().getScene().render(gl3, proj, view);
+
+//                    if (eyeIndex == 0) {
+//                        finalUp.print("finalUp");
+//                        finalForward.print("finalForward");
+//                    }
                 }
             }
             endRendering(gl3);
@@ -526,10 +571,7 @@ public class GlViewer implements GLEventListener {
 
     private void initUBO(GL3 gl3) {
         /**
-         * vec3 ambient;
-         * float lightCount;
-         * vec4 lightPos[8];
-         * vec4 lightColor[8];
+         * vec3 ambient; float lightCount; vec4 lightPos[8]; vec4 lightColor[8];
          *
          * times 4 Bytes/Float
          */
@@ -552,7 +594,8 @@ public class GlViewer implements GLEventListener {
 
         fullscreen = !fullscreen;
 
-        glWindow.setFullscreen(fullscreen);
+//        glWindow.setFullscreen(fullscreen);
+        glWindow.setFullscreen(monitorDevices);
 
 //        glWindow.display();
     }
@@ -568,6 +611,9 @@ public class GlViewer implements GLEventListener {
     public Animator getAnimator() {
         return animator;
     }
+//    public FPSAnimator getAnimator() {
+//        return animator;
+//    }
 
     private Mat4 lookAt(Vec3 eye, Vec3 at, Vec3 up) {
 
@@ -673,6 +719,11 @@ public class GlViewer implements GLEventListener {
 
     public LitSolid getLitSolid() {
         return litSolid;
+    }
+
+    public void move(Vec3 offset) {
+
+        headPos = headPos.plus(offset);
     }
 
     private enum DistortionObjects {

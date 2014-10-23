@@ -34,16 +34,34 @@ public class InputListener implements KeyListener, MouseListener {
         yaw = 0f;
 
         sensitivity = 1f;
-        
+
         move = Move.undefined;
     }
 
     @Override
     public void keyPressed(KeyEvent ke) {
 
-        if (ke.getKeyCode() == KeyEvent.VK_F5) {
+        switch (ke.getKeyCode()) {
 
-            glViewer.toggleFullscreen();
+            case KeyEvent.VK_F5:
+                glViewer.toggleFullscreen();
+                break;
+                
+            case KeyEvent.VK_W:
+                glViewer.move(new Vec3(0, 0f, .5f));
+                break;
+                
+            case KeyEvent.VK_S:
+                glViewer.move(new Vec3(0, 0f, -.5f));
+                break;
+                
+            case KeyEvent.VK_A:
+                glViewer.move(new Vec3(.5f, 0f, 0f));
+                break;
+                
+            case KeyEvent.VK_D:
+                glViewer.move(new Vec3(-.5f, 0f, 0f));
+                break;
         }
     }
 
@@ -55,36 +73,36 @@ public class InputListener implements KeyListener, MouseListener {
 
         return tempYaw;
     }
-    
+
     public Vec3 updateEyePos(Vec3 eyePos, float headYaw, Quat poseOrientation) {
-        
+
         Vec3 localMoveVector = new Vec3();
         Mat4 yawRotation = Mat4.rotationY(headYaw);
-        
-        switch(move){
-            
+
+        switch (move) {
+
             case forward:
-                
+
                 localMoveVector.plus(new Vec3(0f, 0f, -1f));
-                
+
                 break;
-            
+
             case back:
-                
+
                 localMoveVector.plus(new Vec3(0f, 0f, 1f));
-                
+
                 break;
-            
+
             case left:
-                
+
                 localMoveVector.plus(new Vec3(1f, 0f, 0f));
-                
+
                 break;
-            
+
             case right:
-                
+
                 localMoveVector.plus(new Vec3(-1f, 0f, 0f));
-                
+
                 break;
         }
         return localMoveVector;
@@ -146,9 +164,9 @@ public class InputListener implements KeyListener, MouseListener {
     public void mouseWheelMoved(MouseEvent me) {
 
     }
-    
-    private enum Move{
-        
+
+    private enum Move {
+
         forward,
         back,
         left,

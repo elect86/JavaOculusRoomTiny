@@ -29,7 +29,7 @@ public class OculusRoomModel {
 
     }
 
-    public static void populateRoomScene(GL3 gl3, Scene scene) {
+    public static void populateRoomScene(Scene scene) {
 
         scene.addModel(new Model(new Vec3(0f, 0f, 0f), floor));
         scene.addModel(new Model(new Vec3(0f, 0f, 0f), ceiling));
@@ -40,7 +40,7 @@ public class OculusRoomModel {
         scene.addModel(new Model(new Vec3(-3f, 0f, 3f), posts));
 
         scene.setAmbient(new Vec4(0.65f, 0.65f, 0.65f, 1f));
-        float factor = 255f;
+        float factor = 1f;
         scene.addLight(new Vec3(-2f, 4f, -2f), new Vec4(8f / factor, 8f / factor, 8f / factor, 1f));
         scene.addLight(new Vec3(3f, 4f, -3f), new Vec4(2f / factor, 1f / factor, 1f / factor, 1f));
         scene.addLight(new Vec3(-4f, 3f, 25f), new Vec4(3f / factor, 6f / factor, 3f / factor, 1f));

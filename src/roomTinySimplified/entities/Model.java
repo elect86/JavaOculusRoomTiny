@@ -25,7 +25,7 @@ import roomTinySimplified.rendering.glsl.LitTexture;
  * @author gbarbieri
  */
 public final class Model {
-    
+
     private Vec3 position;
     private ArrayList<Vertex> vertices;
     private ArrayList<Integer> indices;
@@ -132,7 +132,7 @@ public final class Model {
     public void render(GL3 gl3, Mat4 projection, Mat4 view) {
 
         view = view.mult(Mat4.translate(position));
-        
+
         if (vbo == null) {
 
             initVBO(gl3);
@@ -179,15 +179,15 @@ public final class Model {
                 if (indices != null) {
 
                     gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
-                    
-                {
+
+                    {
 //                        System.out.println("render");
-                    gl3.glDrawElements(GL3.GL_TRIANGLES, indices.size(), GL3.GL_UNSIGNED_INT, 0);
-                }
+                        gl3.glDrawElements(GL3.GL_TRIANGLES, indices.size(), GL3.GL_UNSIGNED_INT, 0);
+                    }
                     gl3.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, 0);
                 }
                 for (int i = 0; i < 3; i++) {
-                    
+
                     gl3.glDisableVertexAttribArray(i);
                 }
             }
@@ -262,7 +262,7 @@ public final class Model {
 
                 buffer = new float[vertices.size() * vertexSize];
 
-                float factor = 255f;
+                float factor = 255;
 
                 for (int i = 0; i < vertices.size(); i++) {
                     // Position
@@ -289,15 +289,17 @@ public final class Model {
 
                 buffer = new float[vertices.size() * vertexSize];
 
+                float factor = 255;
+
                 for (int i = 0; i < vertices.size(); i++) {
                     // Position
                     buffer[i * vertexSize + 0] = vertices.get(i).getPos().x;
                     buffer[i * vertexSize + 1] = vertices.get(i).getPos().y;
                     buffer[i * vertexSize + 2] = vertices.get(i).getPos().z;
                     // Color
-                    buffer[i * vertexSize + 3] = (float) vertices.get(i).getC().x;
-                    buffer[i * vertexSize + 4] = (float) vertices.get(i).getC().y;
-                    buffer[i * vertexSize + 5] = (float) vertices.get(i).getC().z;
+                    buffer[i * vertexSize + 3] = (float) vertices.get(i).getC().x / factor;
+                    buffer[i * vertexSize + 4] = (float) vertices.get(i).getC().y / factor;
+                    buffer[i * vertexSize + 5] = (float) vertices.get(i).getC().z / factor;
 //                buffer[i * (3 + 4 + 2 + 3) + 3] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 4] = 1;
 //                buffer[i * (3 + 4 + 2 + 3) + 5] = 1;
