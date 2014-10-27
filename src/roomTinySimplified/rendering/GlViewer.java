@@ -39,6 +39,7 @@ import com.oculusvr.capi.OvrRecti;
 import com.oculusvr.capi.OvrSizei;
 import com.oculusvr.capi.OvrVector2f;
 import com.oculusvr.capi.OvrVector2i;
+import com.oculusvr.capi.OvrVector3f;
 import com.oculusvr.capi.Posef;
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +62,7 @@ import jglm.Vec2;
 import jglm.Vec3;
 import jglm.Vec4;
 import roomTinySimplified.InputListener;
+import roomTinySimplified.OculusFinder;
 import roomTinySimplified.core.OculusRoomTiny;
 import roomTinySimplified.rendering.glsl.Distortion;
 import roomTinySimplified.rendering.glsl.LitSolid;
@@ -102,7 +104,7 @@ public class GlViewer implements GLEventListener {
     private Screen screen;
     private List<MonitorDevice> monitorDevices;
     private Vec3 originalPosition;
-    private Vec3 headPos;
+    private Vec4 headPos;
 
     public GlViewer() {
 
@@ -122,7 +124,25 @@ public class GlViewer implements GLEventListener {
         System.out.println("screen.addReference();");
         screen.addReference();
         monitorDevices = new ArrayList<>();
-        monitorDevices.add(screen.getMonitorDevices().get(2));
+        int bestHdm = OculusFinder.getBestHdm(screen);
+        System.out.println("bestHdm " + bestHdm);
+        monitorDevices.add(screen.getMonitorDevices().get(bestHdm));
+
+//        System.out.println("screen.toString() "+screen.toString());
+//        for (MonitorDevice monitorDevice : screen.getMonitorDevices()) {
+//            System.out.println(" ");
+////            System.out.println(" "+monitorDevice.toString());
+////            System.out.println("monitorDevice.getCurrentMode() "+monitorDevice.getCurrentMode().toString());
+////            System.out.println("monitorDevice.getId() "+monitorDevice.getId());
+////            System.out.println("monitorDevice.getOriginalMode() "+monitorDevice.getOriginalMode().toString());
+////            System.out.println("monitorDevice.getScreen() "+monitorDevice.getScreen().toString());
+////            System.out.println("monitorDevice.getSizeMM() "+monitorDevice.getSizeMM().toString());
+//            System.out.println("monitorDevice.getSupportedModes() "+monitorDevice.getSupportedModes().get(0).toString());
+//            System.out.println("monitorDevice.getSupportedModes().size() "+monitorDevice.getSupportedModes().size());
+////            System.out.println("monitorDevice.getViewport() "+monitorDevice.getViewport().toString());
+////            System.out.println("monitorDevice.getViewportInWindowUnits() "+monitorDevice.getViewportInWindowUnits().toString());
+//        }
+//        System.out.println("OculusFinder.getId(screen) "+OculusFinder.getId(screen));
         screen.removeReference();
         System.out.println("/screen.addReference(); " + (System.currentTimeMillis() - start));
 //        System.out.println("" + screen.getMonitorDevices().size());
@@ -167,7 +187,7 @@ public class GlViewer implements GLEventListener {
         forwardVector = new Vec3(0f, 0f, -1f);
         rightVector = new Vec3(1f, 0f, 0f);
 
-        headPos = new Vec3(0f, 1.6f, -5f);
+        headPos = new Vec4(0f, 1.6f, -5f, 1f);
 
         bodyYaw = (float) Math.PI;
         sensitivity = 1f;
@@ -379,7 +399,7 @@ public class GlViewer implements GLEventListener {
     @Override
     public void display(GLAutoDrawable glad) {
 
-//        System.out.println("display");
+//        System.out.println("display, glWindow.hasFocus()" + glWindow.hasFocus());
         Posef[] eyeRenderPose = new Posef[2];
         GL3 gl3 = glad.getGL().getGL3();
 
@@ -395,6 +415,10 @@ public class GlViewer implements GLEventListener {
 //                        eyeRenderPose[1].Orientation.z, eyeRenderPose[1].Orientation.w);
 //                headPos = inputListener.updateEyePos(headPos, bodyYaw, quat);
             }
+//            OvrVector3f hmdToEyeViewOffset[] = new OvrVector3f[]{eyeRenderDescs[0].HmdToEyeViewOffset,
+//                eyeRenderDescs[1].HmdToEyeViewOffset};
+//            eyeRenderPose = hmd.getEyePoses(frameCount, hmdToEyeViewOffset);
+
             beginRendering(gl3);
             {
                 // Render the two undistorted eye views into their render buffers.
@@ -421,7 +445,7 @@ public class GlViewer implements GLEventListener {
 
                     Vec4 eyePosition = new Vec4(eyeRenderPose[eye].Position.x, eyeRenderPose[eye].Position.y,
                             eyeRenderPose[eye].Position.z, 1f);
-                    Vec3 shiftedEyePos = new Vec3((new Vec4(headPos, 1f)).plus(rollPitchYaw.mult(eyePosition)));
+                    Vec3 shiftedEyePos = new Vec3(headPos.plus(rollPitchYaw.mult(eyePosition)));
 
 //                    Mat4 view = lookAt(headPos, headPos.plus(new Vec3(finalForward)), new Vec3(finalUp));
                     Mat4 view = lookAt(shiftedEyePos, shiftedEyePos.plus(new Vec3(finalForward)), new Vec3(finalUp));
@@ -433,10 +457,10 @@ public class GlViewer implements GLEventListener {
                     gl3.glViewport(eyeRenderViewport[eye].Pos.x, eyeRenderViewport[eye].Pos.y,
                             eyeRenderViewport[eye].Size.w, eyeRenderViewport[eye].Size.h);
 
-                    Vec3 offset = new Vec3(eyeRenderDescs[eye].ViewAdjust.x,
-                            eyeRenderDescs[eye].ViewAdjust.y, eyeRenderDescs[eye].ViewAdjust.z);
-
-                    view = Mat4.translate(offset).mult(view);
+//                    Vec3 offset = new Vec3(eyeRenderDescs[eye].ViewAdjust.x,
+//                            eyeRenderDescs[eye].ViewAdjust.y, eyeRenderDescs[eye].ViewAdjust.z);
+//
+//                    view = Mat4.translate(offset).mult(view);
 
                     OculusRoomTiny.getInstance().getScene().render(gl3, proj, view);
 
@@ -595,7 +619,11 @@ public class GlViewer implements GLEventListener {
         fullscreen = !fullscreen;
 
 //        glWindow.setFullscreen(fullscreen);
-        glWindow.setFullscreen(monitorDevices);
+        if (fullscreen) {
+            glWindow.setFullscreen(monitorDevices);
+        } else {
+            glWindow.setFullscreen(fullscreen);
+        }
 
 //        glWindow.display();
     }
@@ -723,7 +751,7 @@ public class GlViewer implements GLEventListener {
 
     public void move(Vec3 offset) {
 
-        headPos = headPos.plus(offset);
+        headPos = headPos.plus(new Vec4(offset, 0f));
     }
 
     private enum DistortionObjects {

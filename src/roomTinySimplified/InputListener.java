@@ -40,25 +40,25 @@ public class InputListener implements KeyListener, MouseListener {
 
     @Override
     public void keyPressed(KeyEvent ke) {
-
+//        System.out.println("keyPressed " + ke.getKeyCode());
         switch (ke.getKeyCode()) {
 
             case KeyEvent.VK_F5:
                 glViewer.toggleFullscreen();
                 break;
-                
+
             case KeyEvent.VK_W:
                 glViewer.move(new Vec3(0, 0f, .5f));
                 break;
-                
+
             case KeyEvent.VK_S:
                 glViewer.move(new Vec3(0, 0f, -.5f));
                 break;
-                
+
             case KeyEvent.VK_A:
                 glViewer.move(new Vec3(.5f, 0f, 0f));
                 break;
-                
+
             case KeyEvent.VK_D:
                 glViewer.move(new Vec3(-.5f, 0f, 0f));
                 break;
