@@ -5,7 +5,6 @@
  */
 package roomTinySimplified.rendering;
 
-import javax.media.opengl.GL3;
 import jglm.Vec3;
 import jglm.Vec3i;
 import jglm.Vec4;

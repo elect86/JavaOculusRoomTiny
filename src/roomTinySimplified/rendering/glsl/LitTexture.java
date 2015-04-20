@@ -6,7 +6,7 @@
 
 package roomTinySimplified.rendering.glsl;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import roomTinySimplified.core.OculusRoomTiny;
 
 /**

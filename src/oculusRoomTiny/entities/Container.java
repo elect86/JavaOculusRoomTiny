@@ -5,8 +5,8 @@
  */
 package oculusRoomTiny.entities;
 
+import com.jogamp.opengl.GL3;
 import java.util.ArrayList;
-import javax.media.opengl.GL3;
 import jglm.Mat4;
 
 /**

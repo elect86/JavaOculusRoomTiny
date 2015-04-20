@@ -5,9 +5,9 @@
  */
 package oculusRoomTiny.entities;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.FloatBuffer;
-import javax.media.opengl.GL3;
 import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec4;

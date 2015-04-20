@@ -5,20 +5,16 @@
  */
 package oculusRoomTiny.entities;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.texture.Texture;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import javax.media.opengl.GL3;
 import jglm.Mat4;
 import jglm.Vec3;
 import jglm.Vec3i;
 import oculusRoomTiny.core.OculusRoomTiny;
-import oculusRoomTiny.rendering.OculusRoomModel;
 import oculusRoomTiny.rendering.Texture.BuiltinTexture;
 import oculusRoomTiny.rendering.glsl.FillCollection;
-import oculusRoomTiny.rendering.glsl.Program;
-import oculusRoomTiny.rendering.glsl.Program1;
 import oculusRoomTiny.rendering.glsl.ShaderFill;
 import oculusRoomTiny.rendering.glsl.LitTexturesProgram;
 

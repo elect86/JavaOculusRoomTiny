@@ -5,7 +5,7 @@
  */
 package oculusRoomTiny.rendering.glsl;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import jglm.Vec2i;
 import jglm.Vec4;
 import oculusRoomTiny.rendering.Texture;

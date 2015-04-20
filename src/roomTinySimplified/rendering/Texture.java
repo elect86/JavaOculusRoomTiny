@@ -5,9 +5,9 @@
  */
 package roomTinySimplified.rendering;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.ByteBuffer;
-import javax.media.opengl.GL3;
 import jglm.Vec2i;
 import jglm.Vec4;
 import static roomTinySimplified.rendering.TextureFormat.RGBA;

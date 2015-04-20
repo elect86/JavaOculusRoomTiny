@@ -6,7 +6,7 @@
 
 package oculusRoomTiny.entities;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import jglm.Mat4;
 
 /**

@@ -5,8 +5,8 @@
  */
 package roomTinySimplified.rendering;
 
+import com.jogamp.opengl.GL3;
 import com.oculusvr.capi.OvrSizei;
-import javax.media.opengl.GL3;
 
 /**
  *

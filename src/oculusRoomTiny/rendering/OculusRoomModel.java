@@ -5,7 +5,7 @@
  */
 package oculusRoomTiny.rendering;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import jglm.Vec3;
 import jglm.Vec3i;
 import jglm.Vec4;

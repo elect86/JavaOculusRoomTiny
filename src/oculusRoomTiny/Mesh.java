@@ -6,10 +6,10 @@
 
 package oculusRoomTiny;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.util.GLBuffers;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import javax.media.opengl.GL3;
 
 /**
  *

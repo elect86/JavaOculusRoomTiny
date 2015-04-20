@@ -11,8 +11,13 @@ import com.jogamp.newt.NewtFactory;
 import com.jogamp.newt.Screen;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.GLException;
+import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.util.Animator;
-import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.opengl.util.GLBuffers;
 import com.jogamp.opengl.util.GLReadBufferUtil;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -21,7 +26,6 @@ import com.oculusvr.capi.DistortionVertex;
 import com.oculusvr.capi.EyeRenderDesc;
 import com.oculusvr.capi.FovPort;
 import com.oculusvr.capi.Hmd;
-import com.oculusvr.capi.OvrLibrary;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_Chromatic;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_TimeWarp;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.ovrDistortionCap_Vignette;
@@ -39,7 +43,6 @@ import com.oculusvr.capi.OvrRecti;
 import com.oculusvr.capi.OvrSizei;
 import com.oculusvr.capi.OvrVector2f;
 import com.oculusvr.capi.OvrVector2i;
-import com.oculusvr.capi.OvrVector3f;
 import com.oculusvr.capi.Posef;
 import java.io.File;
 import java.io.IOException;
@@ -49,12 +52,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLException;
-import javax.media.opengl.GLProfile;
 import static jglm.Jglm.calculateFrustumScale;
 import jglm.Mat4;
 import jglm.Quat;
@@ -105,6 +102,8 @@ public class GlViewer implements GLEventListener {
     private List<MonitorDevice> monitorDevices;
     private Vec3 originalPosition;
     private Vec4 headPos;
+    private long start;
+    private long total;
 
     public GlViewer() {
 
@@ -127,6 +126,7 @@ public class GlViewer implements GLEventListener {
         int bestHdm = OculusFinder.getBestHdm(screen);
         System.out.println("bestHdm " + bestHdm);
         monitorDevices.add(screen.getMonitorDevices().get(bestHdm));
+//        monitorDevices.add(screen.getMonitorDevices().get(0));
 
 //        System.out.println("screen.toString() "+screen.toString());
 //        for (MonitorDevice monitorDevice : screen.getMonitorDevices()) {
@@ -166,8 +166,11 @@ public class GlViewer implements GLEventListener {
         glWindow.setFullscreen(fullscreen);
 
         animator = new Animator(glWindow);
+        animator.setRunAsFastAsPossible(true);
 //        animator = new FPSAnimator(glWindow, 60);
         animator.start();
+
+        toggleFullscreen();
 
 //        glWindow.setVisible(true);
 //        glWindow.setAutoSwapBufferMode(false);
@@ -247,6 +250,10 @@ public class GlViewer implements GLEventListener {
         initOculus(gl3);
 
         OculusRoomModel.populateRoomScene(OculusRoomTiny.getInstance().getScene());
+
+        start = System.currentTimeMillis();
+
+        gl3.setSwapInterval(0);
     }
 
     private void initOculus(GL3 gl3) {
@@ -256,6 +263,7 @@ public class GlViewer implements GLEventListener {
         int x = recommendedTex0Size.w + recommendedTex1Size.w;
         int y = Math.max(recommendedTex0Size.h, recommendedTex1Size.h);
         OvrSizei renderTargetSize = new OvrSizei(x, y);
+//        System.out.println("renderTargetSize (" + renderTargetSize.w + ", " + renderTargetSize.h + ")");
 
 //        Texture pRenderTargetTexture = Texture.create(gl3, TextureFormat.RGBA, renderTargetSize, null);
         frameBuffer = new FrameBuffer(gl3, renderTargetSize);
@@ -284,7 +292,8 @@ public class GlViewer implements GLEventListener {
 
         for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
 
-            int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp | ovrDistortionCap_Vignette;
+            int distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp
+                    | ovrDistortionCap_Vignette;
 
             DistortionMesh meshData = hmd.createDistortionMesh(eyeNum, eyeFov[eyeNum], distortionCaps);
 
@@ -391,6 +400,20 @@ public class GlViewer implements GLEventListener {
     @Override
     public void dispose(GLAutoDrawable glad) {
 
+        System.out.println("" + animator.getFPSStartTime());
+        System.out.println("" + animator.getLastFPS());
+        System.out.println("" + animator.getLastFPSPeriod());
+        System.out.println("" + animator.getLastFPSUpdateTime());
+        System.out.println("" + animator.getTotalFPS());
+        System.out.println("" + animator.getTotalFPSDuration());
+        System.out.println("" + animator.getTotalFPSFrames());
+        System.out.println("" + animator.getUpdateFPSFrames());
+        total = System.currentTimeMillis() - start;
+        System.out.println("total time " + total);
+        frameCount += 2;
+        System.out.println("frameCount " + frameCount);
+        System.out.println("average time " + (total / frameCount));
+
         System.out.println("dispose");
 
         System.exit(0);
@@ -398,124 +421,130 @@ public class GlViewer implements GLEventListener {
 
     @Override
     public void display(GLAutoDrawable glad) {
-
+//        start = System.currentTimeMillis();
 //        System.out.println("display, glWindow.hasFocus()" + glWindow.hasFocus());
-        Posef[] eyeRenderPose = new Posef[2];
-        GL3 gl3 = glad.getGL().getGL3();
 
-        hmd.beginFrameTiming(++frameCount);
-        {
+        for (int heavier = 0; heavier < 10; heavier++) {
+
+            Posef[] eyeRenderPose = new Posef[2];
+            GL3 gl3 = glad.getGL().getGL3();
+
+            hmd.beginFrameTiming(++frameCount);
+            {
 //            Vec3 headPos = new Vec3(0f, 1.6f, -5f);
 
-            bodyYaw += inputListener.retrieveMouseYaw();
+                bodyYaw += inputListener.retrieveMouseYaw();
 
-            if (eyeRenderPose != null) {
+                if (eyeRenderPose != null) {
 
 //                Quat quat = new Quat(eyeRenderPose[1].Orientation.x, eyeRenderPose[1].Orientation.y,
 //                        eyeRenderPose[1].Orientation.z, eyeRenderPose[1].Orientation.w);
 //                headPos = inputListener.updateEyePos(headPos, bodyYaw, quat);
-            }
+                }
 //            OvrVector3f hmdToEyeViewOffset[] = new OvrVector3f[]{eyeRenderDescs[0].HmdToEyeViewOffset,
 //                eyeRenderDescs[1].HmdToEyeViewOffset};
 //            eyeRenderPose = hmd.getEyePoses(frameCount, hmdToEyeViewOffset);
 
-            beginRendering(gl3);
-            {
-                // Render the two undistorted eye views into their render buffers.
-                gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, frameBuffer.getId());
-                clear(gl3);
+                beginRendering(gl3);
+                {
+                    // Render the two undistorted eye views into their render buffers.
+                    gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, frameBuffer.getId());
+                    clear(gl3);
 
-                for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++) {
+                    for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++) {
 
-                    int eye = hmd.EyeRenderOrder[eyeIndex];
-                    eyeRenderPose[eye] = hmd.getEyePose(eye);
+                        int eye = hmd.EyeRenderOrder[eyeIndex];
+                        eyeRenderPose[eye] = hmd.getEyePose(eye);
 
-                    // Get view and projection matrices
-                    Mat4 rollPitchYaw = Mat4.rotationY(bodyYaw);
+                        // Get view and projection matrices
+                        Mat4 rollPitchYaw = Mat4.rotationY(bodyYaw);
 
 //                    System.out.println("(" + eyeRenderPose[eye].Position.x + ", "
 //                            + eyeRenderPose[eye].Position.y + ", " + eyeRenderPose[eye].Position.z + ")");
-                    Quat orientation = new Quat(eyeRenderPose[eye].Orientation.x, eyeRenderPose[eye].Orientation.y,
-                            eyeRenderPose[eye].Orientation.z, eyeRenderPose[eye].Orientation.w);
-                    Mat4 finalRollPitchYaw = rollPitchYaw.mult(orientation.toMatrix());
+                        Quat orientation = new Quat(eyeRenderPose[eye].Orientation.x, eyeRenderPose[eye].Orientation.y,
+                                eyeRenderPose[eye].Orientation.z, eyeRenderPose[eye].Orientation.w);
+                        Mat4 finalRollPitchYaw = rollPitchYaw.mult(orientation.toMatrix());
 
-                    Vec4 finalUp = finalRollPitchYaw.mult(new Vec4(0f, 1f, 0f, 1f));
+                        Vec4 finalUp = finalRollPitchYaw.mult(new Vec4(0f, 1f, 0f, 1f));
 
-                    Vec4 finalForward = finalRollPitchYaw.mult(new Vec4(0f, 0f, -1f, 1f));
+                        Vec4 finalForward = finalRollPitchYaw.mult(new Vec4(0f, 0f, -1f, 1f));
 
-                    Vec4 eyePosition = new Vec4(eyeRenderPose[eye].Position.x, eyeRenderPose[eye].Position.y,
-                            eyeRenderPose[eye].Position.z, 1f);
-                    Vec3 shiftedEyePos = new Vec3(headPos.plus(rollPitchYaw.mult(eyePosition)));
+                        Vec4 eyePosition = new Vec4(eyeRenderPose[eye].Position.x, eyeRenderPose[eye].Position.y,
+                                eyeRenderPose[eye].Position.z, 1f);
+                        Vec3 shiftedEyePos = new Vec3(headPos.plus(rollPitchYaw.mult(eyePosition)));
 
 //                    Mat4 view = lookAt(headPos, headPos.plus(new Vec3(finalForward)), new Vec3(finalUp));
-                    Mat4 view = lookAt(shiftedEyePos, shiftedEyePos.plus(new Vec3(finalForward)), new Vec3(finalUp));
+                        Mat4 view = lookAt(shiftedEyePos, shiftedEyePos.plus(new Vec3(finalForward)), new Vec3(finalUp));
 
-                    Mat4 proj = createProjection(eyeRenderDescs[eye].Fov, .01f, 10000f);
+                        Mat4 proj = createProjection(eyeRenderDescs[eye].Fov, .01f, 10000f);
 
 //                view.print("view");
 //                proj.print("proj");
-                    gl3.glViewport(eyeRenderViewport[eye].Pos.x, eyeRenderViewport[eye].Pos.y,
-                            eyeRenderViewport[eye].Size.w, eyeRenderViewport[eye].Size.h);
+                        gl3.glViewport(eyeRenderViewport[eye].Pos.x, eyeRenderViewport[eye].Pos.y,
+                                eyeRenderViewport[eye].Size.w, eyeRenderViewport[eye].Size.h);
 
 //                    Vec3 offset = new Vec3(eyeRenderDescs[eye].ViewAdjust.x,
 //                            eyeRenderDescs[eye].ViewAdjust.y, eyeRenderDescs[eye].ViewAdjust.z);
 //
 //                    view = Mat4.translate(offset).mult(view);
-
-                    OculusRoomTiny.getInstance().getScene().render(gl3, proj, view);
+                        OculusRoomTiny.getInstance().getScene().render(gl3, proj, view);
 
 //                    if (eyeIndex == 0) {
 //                        finalUp.print("finalUp");
 //                        finalForward.print("finalForward");
 //                    }
+                    }
                 }
-            }
-            endRendering(gl3);
+                endRendering(gl3);
 //            saveImage(gl3);
 
-            // Clear screen
-            gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, 0);
-            gl3.glDrawBuffer(GL3.GL_BACK);
-            gl3.glViewport(0, 0, glWindow.getWidth(), glWindow.getHeight());
-            gl3.glDisable(GL3.GL_DEPTH_TEST);
-            gl3.glClear(GL3.GL_COLOR_BUFFER_BIT);
+                // Clear screen
+                gl3.glBindFramebuffer(GL3.GL_FRAMEBUFFER, 0);
+                gl3.glDrawBuffer(GL3.GL_BACK);
+                gl3.glViewport(0, 0, glWindow.getWidth(), glWindow.getHeight());
+//            System.out.println("glWindow (" + glWindow.getWidth() + ", " + glWindow.getHeight() + ")");
+                gl3.glDisable(GL3.GL_DEPTH_TEST);
+                gl3.glClear(GL3.GL_COLOR_BUFFER_BIT);
 
-            // Setup shader
-            distortion.bind(gl3);
-            {
-                gl3.glActiveTexture(GL3.GL_TEXTURE0);
-                gl3.glBindTexture(GL3.GL_TEXTURE_2D, frameBuffer.getTextureId());
-                gl3.glUniform1i(distortion.getTexture0UL(), 0);
+                // Setup shader
+                distortion.bind(gl3);
+                {
+                    gl3.glActiveTexture(GL3.GL_TEXTURE0);
+                    gl3.glBindTexture(GL3.GL_TEXTURE_2D, frameBuffer.getTextureId());
+                    gl3.glUniform1i(distortion.getTexture0UL(), 0);
 
-                for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
+                    for (int eyeNum = 0; eyeNum < ovrEye_Count; eyeNum++) {
 
-                    // Get and set shader constants
-                    gl3.glUniform2f(distortion.getEyeToSourceUVscaleUL(),
-                            uvScaleOffset[eyeNum][0].x, -uvScaleOffset[eyeNum][0].y);
-                    gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(),
-                            uvScaleOffset[eyeNum][1].x, 1 - uvScaleOffset[eyeNum][1].y);
+                        // Get and set shader constants
+                        gl3.glUniform2f(distortion.getEyeToSourceUVscaleUL(),
+                                uvScaleOffset[eyeNum][0].x, -uvScaleOffset[eyeNum][0].y);
+                        gl3.glUniform2f(distortion.getEyeToSourceUVoffsetUL(),
+                                uvScaleOffset[eyeNum][1].x, 1 - uvScaleOffset[eyeNum][1].y);
 
-                    OvrMatrix4f[] timeWarpMatricesRowMajor = new OvrMatrix4f[2];
-                    hmd.getEyeTimewarpMatrices(eyeNum, hmd.getEyePose(eyeNum), timeWarpMatricesRowMajor);
-                    gl3.glUniformMatrix4fv(distortion.getEyeRotationStartUL(), 1, true, timeWarpMatricesRowMajor[0].M, 0);
-                    gl3.glUniformMatrix4fv(distortion.getEyeRotationEndUL(), 1, true, timeWarpMatricesRowMajor[1].M, 0);
+                        OvrMatrix4f[] timeWarpMatricesRowMajor = new OvrMatrix4f[2];
+                        hmd.getEyeTimewarpMatrices(eyeNum, hmd.getEyePose(eyeNum), timeWarpMatricesRowMajor);
+                        gl3.glUniformMatrix4fv(distortion.getEyeRotationStartUL(), 1, true, timeWarpMatricesRowMajor[0].M, 0);
+                        gl3.glUniformMatrix4fv(distortion.getEyeRotationEndUL(), 1, true, timeWarpMatricesRowMajor[1].M, 0);
 
-                    gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.vbo.ordinal()]);
-                    {
-                        gl3.glBindVertexArray(distortionObjects[eyeNum][DistortionObjects.vao.ordinal()]);
+                        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, distortionObjects[eyeNum][DistortionObjects.vbo.ordinal()]);
                         {
-                            gl3.glDrawElements(GL3.GL_TRIANGLES, indicesCount, GL3.GL_UNSIGNED_INT, 0);
+                            gl3.glBindVertexArray(distortionObjects[eyeNum][DistortionObjects.vao.ordinal()]);
+                            {
+                                gl3.glDrawElements(GL3.GL_TRIANGLES, indicesCount, GL3.GL_UNSIGNED_INT, 0);
+                            }
+                            gl3.glBindVertexArray(0);
                         }
-                        gl3.glBindVertexArray(0);
+                        gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
                     }
-                    gl3.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
                 }
-            }
-            distortion.unbind(gl3);
+                distortion.unbind(gl3);
 //            render(gl3, projection, view);
+            }
+            hmd.endFrameTiming();
+            checkError(gl3);
         }
-        hmd.endFrameTiming();
-        checkError(gl3);
+//        total += System.currentTimeMillis() - start;
+//        start = System.currentTimeMillis();
     }
 
     private void saveImage(GL3 gl3) {
